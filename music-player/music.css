@@ -1,0 +1,6 @@
+body {
+    background-size: cover; /* Adatta l'immagine per coprire l'intero background */
+    background-position: center; /* Centra l'immagine nel background */
+    background-repeat: no-repeat; /* Evita che l'immagine di sfondo si ripeta */
+}
+
