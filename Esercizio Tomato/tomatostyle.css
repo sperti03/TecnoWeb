@@ -133,8 +133,8 @@ body {
       justify-content: center;
       align-items: center;
       flex-direction: column;
-      width:20vmin;
-      height:20vmin; 
+      width: 21vmin;
+      height:21vmin; 
       border:1vh  solid transparent;
       border-radius:50%;
       background: linear-gradient(rgba(181, 236, 255, 255), rgba(181, 236, 255, 255)) content-box no-repeat,
@@ -160,6 +160,14 @@ body {
   flex-direction: column;
   align-items: center;
   justify-content: center;
+}
+
+#cycleCounter{
+  font-size: 3vmin;
+  color:#fbeee0;
+      text-shadow: 1px 1px 2px rgba(0, 0, 0, 1);
+      -webkit-text-stroke-color:  #422800;
+      -webkit-text-stroke-width: .5px;
 }
 
 
