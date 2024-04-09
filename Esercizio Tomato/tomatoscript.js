@@ -7,9 +7,9 @@ document.getElementById('studyForm').addEventListener('submit', function(event) 
   // Ottiene il tempo di studio inserito dall'utente e lo converte in un numero intero
   const divetohide = document.getElementById('studyForm');
   divetohide.style.display = "none";
-
+  
   const time = document.getElementById('timerDisplay');
-
+  const session = document.getElementById('cycleCounter');
   const stimages = document.getElementById('studyingImages');
   const brimages = document.getElementById('breakImages');
 
@@ -18,22 +18,26 @@ document.getElementById('studyForm').addEventListener('submit', function(event) 
   const pauseTime = parseInt(document.getElementById('pauseTime').value, 10);
   let cycles = parseInt(document.getElementById('cycles').value, 10);
   let interval;
+  const totalcycles = cycles;
   // Converte i minuti in secondi per l'animazione
   const studyanimationDuration = studyTime * 60; 
   const pauseanimationDuration = pauseTime *60;
   const styleSheet= document.createElement("style");
+  session.style.display = "block";
   isstudy();
 
 
   function isstudy(){
     
   time.style.display = "block";
+  session.textContent = `Session: ${totalcycles-cycles+1}/${totalcycles}`;    
 
       if(cycles==0){
       textOnClock.textContent = "The End";
       stimages.style.display = "none";
       time.style.display = "none";
       divetohide.style.display = "block";
+      session.style.display = "none";
       return;
     }
     textOnClock.textContent = "STUDY";
