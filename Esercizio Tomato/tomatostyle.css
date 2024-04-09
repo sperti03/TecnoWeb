@@ -1,0 +1,308 @@
+
+@import url('https://fonts.cdnfonts.com/css/candy');
+
+
+:root{
+  --textonclock: "Study Time";
+  --main-color:hsl(45, 100%, 71%);
+  --second-color: hsl(45, 100%, 81%);
+  --third-color: hsl(45, 100%, 61%);
+  --fourth-color: hsl(45, 100%, 51%);
+  --fifth-color: hsl(45, 100%, 31%);
+  --sixth-color: hsl(45, 100%, 41%);
+}
+
+body {
+    font-family: 'Candy', sans-serif;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    height: 100vh;
+    flex-direction: column;
+    z-index: 2;
+    overflow: hidden;
+    background-image: url("icecream2.png");
+    background-size: cover;
+    background-repeat: no-repeat;
+    background-position: center;
+  }
+
+  h1{
+    margin: 0;
+    font-weight: 100;
+    font-size: 14vmin;
+    color:#fbeee0; ;
+    text-shadow: 1px 1px 2px  #422800;
+    -webkit-text-stroke-color:  #422800;
+    -webkit-text-stroke-width: 3px;
+    position: absolute;
+    left:50%;
+    transform: translate(-50%);
+    top:0%;
+    z-index: 1000;
+  }
+
+ 
+      input{
+        border: 2px solid #422800;
+        border-radius: 30px;
+        box-shadow: #422800 4px 4px 0 0;
+        color: #422800;
+        width: 15vmin;
+        height: 5vmin;
+        padding: 1vmin;
+        font-size: 2vmin;
+        text-align: center;
+        background-color: #fbeee0;
+        }
+    
+      
+
+    #studyForm {
+      font-size: 7vmin;
+      display: flex;
+      flex-direction: row;
+      justify-content: space-between;
+      align-items: center;
+      gap: 2vmin;
+      position: absolute;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      z-index: 100;
+    }
+
+      .elenco {
+        color:#fbeee0;
+      text-shadow: 1px 1px 2px rgba(0, 0, 0, 1);
+      -webkit-text-stroke-color:  #422800;
+      -webkit-text-stroke-width: 1px;
+        top: 30%;
+        position: absolute;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        justify-content: center;
+        gap: 1vmin;
+        left: 12%;
+      }
+    
+
+    .startbutton {
+      position: absolute;
+      color: white;
+      font-size: 3vmin;
+      padding: 1vmin;
+      top: 50%;
+      justify-content: flex-end;
+      right: 15%;
+    }
+
+
+    button {
+      background-color: #fbeee0;
+      border: 2px solid #422800;
+      border-radius: 30px;
+      box-shadow: #422800 4px 4px 0 0;
+      color: #422800;
+      cursor: pointer;
+      display: inline-block;
+      font-weight: 600;
+      font-size: 18px;
+      padding: 0 18px;
+      line-height: 50px;
+      text-align: center;
+      text-decoration: none;
+      user-select: none;
+      -webkit-user-select: none;
+      touch-action: manipulation;
+    }
+    
+    button:hover {
+      background-color: #fff;
+    }
+    
+    button:active {
+      box-shadow: #422800 2px 2px 0 0;
+      transform: translate(2px, 2px);
+    }
+    
+    #clock {
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      flex-direction: column;
+      width:20vmin;
+      height:20vmin; 
+      border:1vh  solid transparent;
+      border-radius:50%;
+      background: linear-gradient(rgba(181, 236, 255, 255), rgba(181, 236, 255, 255)) content-box no-repeat,
+                conic-gradient( var( --main-color)100%, 0, white) border-box;
+      position: absolute;
+      top: 29%;
+      left: 50%;
+      transform: translate(-50%, -50%);
+      z-index: 200;
+      background-color: rgba(0, 0, 0, 0);
+    }
+  
+    
+.timer {
+  display: flex;
+  text-align: center;
+  color: white;
+  font-size: 7vmin;
+  text-shadow: 2px 2px 4px rgba(0, 0, 0, 1);
+  text-shadow: 1px 1px 2px rgba(0, 0, 0, 1);
+  -webkit-text-stroke-color:  #422800;
+  -webkit-text-stroke-width: 1px;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+}
+
+
+#textOnClock {
+  text-shadow: 1px 1px 2px rgba(0, 0, 0, 1);
+  -webkit-text-stroke-color:  #422800;
+  -webkit-text-stroke-width: 1px;
+  color: #fbeee0;
+  font-size: 3.5vmin;
+  align-items: center;
+  justify-content: center;
+}
+  .bubble {
+    width: 50vmin;
+    height: 50vmin;
+    background: var( --main-color);
+    border: 4.5vmin solid var( --second-color);
+    position: absolute;
+    top: 70%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    overflow: visible;
+    border-radius: 48% 40% 62% 47% /  61% 49% 64% 43%;
+    z-index: 1;
+  }
+
+  .bubble:before {
+    content: '';
+    position: absolute;
+    top: 5vmin;
+    left: 5vmin;
+    width: calc(90% - (10vmin));
+    height: calc(90% - (10vmin));
+    background:var(--fourth-color);
+    border: 3.25vmin solid var(--third-color);
+    border-radius: 41% 40% 50% 55% /  49% 52% 51% 43%;
+    z-index: -2;
+  }
+  @keyframes rotateBefore {
+    0% { transform: rotate(-2turn); }
+  }
+
+  .bubble:after {
+    content: '';
+    position: absolute;
+    top: 10vmin;
+    left: 10vmin;
+    width: calc(90% - (20vmin));
+    height: calc(90% - (20vmin));
+    
+    background: var(--fifth-color);
+    border: 2.5vmin solid var(--sixth-color);
+    border-radius: 42% 63% 51% 60% / 47% 62% 42% 52%;
+  }
+  @keyframes rotateAfter {
+    0% { transform: rotate(2turn); }
+  }
+
+
+
+
+
+
+  /*inizio a creare il ghiacciolo*/
+  .stick{
+    height: 35vmin;
+    width: 5vmin;
+    border-radius: 20px;
+    position: absolute;
+    top: 70%;
+    left: 50%;
+    transform: translate(-50%, -50%); /* Add this line to center the stick */
+    background-color: rgb(247, 198, 109);
+    box-shadow: 2px 1px 6px rgba(0, 0, 0, 0.5);
+    z-index: 99;
+  }
+
+  .stickwrite{
+    font-size: 3vmin;
+    color: brown;
+    position: absolute;
+    top: 35%;
+    left: 50%;
+    transform: translate(-50%, 0%) rotate(-90deg);
+    white-space: nowrap;
+  }
+
+  .ice{
+    height: 25vmin;
+    width: 15vmin;
+    background-image: url("iceback4.jpg");
+    background-size:50vmin;
+    position: absolute;
+    top: 0px;
+    left: -5vmin;
+    border-radius: 80px 80px 20px 20px;
+    box-shadow: 2px 0px 6px rgba(0, 0, 0, 0.7);
+    z-index: 100;
+  }
+
+  @keyframes shade{
+    to{
+      box-shadow:none;
+    }
+  }
+
+  @keyframes melt{
+    40%{
+      top: 5px  ;
+    }
+    75%{
+      top: 10px; opacity: 1;
+    }
+    85%{
+      height: 100px;
+      width: 30px;
+      background-color: rgb(243, 135, 198);
+      border-radius: 100% 100% 20px 20px;
+      left: 3px;
+      top: 15px;
+    }
+    97%{
+      height: 50px;
+      width: 0px;
+      left: 18px;
+    }
+    100%{
+      height: 0px;
+      width: 0px;
+      opacity: 0;
+    }
+  }
+
+  .catimages{
+    position:absolute;
+    justify-content: space-around;
+    align-items: center;
+    display: none;
+  }
+
+  .catimages > * {
+    margin-left: 45vmin;
+    margin-right: 45vmin;
+  }
+
+ 
