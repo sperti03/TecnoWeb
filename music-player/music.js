@@ -36,6 +36,18 @@ const volumeControl = document.getElementById("volumeControl");
 const backimage = document.getElementById("backimg");
 const seekBar = document.getElementById("seekBar");
 
+
+audioPlayer.addEventListener("loadedmetadata", function() {
+    const duration = audioPlayer.duration;
+    seekBar.max = duration;
+});
+
+audioPlayer.addEventListener("timeupdate", function() {
+    const currentTime = audioPlayer.currentTime;
+    seekBar.value = currentTime;
+});
+
+
 seekBar.addEventListener("input", function() {
     const newPosition = this.value;
     audioPlayer.currentTime = newPosition;
