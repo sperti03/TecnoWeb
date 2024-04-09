@@ -2,19 +2,19 @@ const cardData = [
     {
         title: "Catania",
         artist: "Giuseppe Castiglia",
-        imageUrl: "ct.jpg",
+        imageUrl: "https://i.scdn.co/image/ab67616d0000b273b7634254914c42ba68c0f5f0",
         audioUrl: "ct.mp3",
     },
     {
         title: "Semu Giarrisi",
         artist: "Fratelli Tarantella",
-        imageUrl: "giarre.jpg",
+        imageUrl: "https://i.scdn.co/image/ab67616d0000b2737ba24b8b670a38e814ae3838",
         audioUrl: "giarre.mp3",
     },
    {
         title: "A Megghiu Frutta",
         artist: "Savvo Zauddu",
-        imageUrl: "frutta.jpg",
+        imageUrl: "https://is1-ssl.mzstatic.com/image/thumb/Music124/v4/44/8a/17/448a17c1-6b86-ec95-c124-f0268be05eb8/cover.jpg/1200x1200bf-60.jpg",
         audioUrl: "frutta.mp3",
     },
 ];
