@@ -1,0 +1,210 @@
+body{
+    overflow: hidden;
+    background-image: url("https://digitalsynopsis.com/wp-content/uploads/2017/07/beautiful-color-ui-gradients-backgrounds-pale-wood.png");
+    background-size: cover;
+}
+
+hr{
+    background-color:#6F4E37;
+}
+
+h2{
+    color: #6F4E37;
+    text-align: center;
+}
+
+.checkbox-container {
+    position: relative;
+    padding-left: 35px;
+    padding-top:50%;
+    cursor: pointer;
+    font-size: 35px;
+    font-weight: bold;
+    user-select: none;
+    align-self: center;
+}
+
+.checkbox-container input {
+position: absolute;
+opacity: 0;
+cursor: pointer;
+height: 0;
+width: 0;
+}
+
+.custom-checkbox {
+position: absolute;
+top: 0;
+left: 0;
+height: 25px;
+width: 25px;
+background-color: #FFFEF0;
+border: 1px solid #6F4E37;
+border-radius: 5px;
+transition: all 0.3s ease;
+}
+
+.checkbox-container:hover input ~ .custom-checkbox {
+background-color: rgb(235, 233, 180);
+}
+
+
+.checkbox-container input:checked ~ .custom-checkbox::after {
+content: "x";
+position: absolute;
+padding-top: 65%;
+left: 50%;
+transform: translate(-50%, -50%);
+color: #6F4E37;
+}
+
+.form{
+    width: 100%;
+    padding: 12px 20px;
+    margin: 8px 0;
+    display: inline-block;
+    border: 3px solid #6F4E37;
+    background-color: #FFFEF0;
+    box-sizing: border-box;
+    border-radius: 10px;
+    color:#6F4E37;
+}
+
+#deleteForm{
+    display: inline;
+}
+
+#trash{
+    color:#6F4E37;
+    border: 1px solid #6F4E37;
+    background-color:#FFFEF0;
+    outline: none;
+    cursor:pointer;
+    margin: 0;
+    border-radius: 5px;
+    box-shadow: 0 3px #6F4E37;
+    transition: background-color 0.3s ease;
+}
+#trash:hover{
+    color: red; 
+}
+
+#trash:active{
+    background-color: #FFFEF0;
+    box-shadow: 0 1px #6F4E37;   
+    transform: translateY(3px);   
+}
+
+.box{
+    display:flex;
+    margin:auto;    
+    justify-content: center;
+    align-items: center;
+    width: 35%;
+    height: 100%;
+    background-color: #FFFDD0;
+    border: 5px solid #6F4E37;
+    border-radius: 50px;
+}
+
+
+.addbutton{
+    margin: 10px;
+    align-self: center;
+    justify-content: center;
+    display: flex;
+}
+
+.button {
+    background-color: #FFFEF0; 
+    color: #6F4E37; 
+    padding: 15px 32px;
+    text-align: center;
+    text-decoration: none;
+    display: inline-block;
+    font-size: 16px;
+    margin: 4px 2px;
+    cursor: pointer;
+    border-radius: 10px;
+    border: 1px solid #6F4E37;
+        transition: all 0.3s ease;
+        box-shadow: 0 5px #6F4E37; 
+}
+
+.button:hover {
+    background-color: rgb(235, 233, 180);
+    color: #6F4E37;
+    text-decoration: none;
+}
+
+.button:active {
+    background-color: white;
+    box-shadow: 0 2px #6F4E37;
+    transform: translateY(3px); 
+}
+
+.todoslist {
+    display: grid;
+    grid-template-columns: .4fr 1.5fr 1.1fr 1.1fr .3fr;
+    font-size: 2vmin;
+    gap: 40px;
+    padding: 10px;
+    margin: 10px;
+    width: 100%;
+    align-items: center;
+    justify-items: center;
+    border-radius: 10px;
+    box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+    border: 1px solid rgba(0, 0, 0, 1);
+    background-color: #FFFEF0;
+    
+}
+
+.todoslist > div {
+    overflow-wrap: break-word;
+    white-space: normal;
+    text-overflow: ellipsis;
+    word-break: break-word;
+}
+
+.strikethrough {
+    text-decoration: line-through;
+}
+
+.listelement{
+    display: flex;
+    flex-direction: column;
+    white-space: normal;
+}
+
+.todocontainer{
+    display: flex;
+    max-height: 55vmin;
+    height: 50%;
+    flex-direction: column;
+    align-items: center;
+    word-wrap: break-word;
+    overflow-wrap: break-word;
+    white-space: normal;
+    overflow: scroll;
+    overflow-x: hidden;
+}
+
+.todocontainer::-webkit-scrollbar{
+    display: none;
+}
+#searchForm {
+    position: relative;
+}
+
+.empty-message {
+    display: none;
+    justify-content: center;
+    align-items: center;
+    font-size: 2rem;
+    color: #6F4E37;
+    font-weight: bold;
+    align-self: center;
+    padding-top: 25%;
+    justify-self: center;
+}
