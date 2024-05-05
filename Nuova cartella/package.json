@@ -12,10 +12,6 @@
   },
   "author": "",
   "license": "ISC",
-  "bugs": {
-    "url": "https://github.com/ErikDervishi03/techWeb/issues"
-  },
-  "homepage": "https://github.com/ErikDervishi03/techWeb#readme",
   "dependencies": {
     "cors": "^2.8.5",
     "dotenv": "^16.4.5",
