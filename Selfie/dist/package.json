@@ -1,0 +1,32 @@
+{
+  "name": "selfie",
+  "version": "0.0.0",
+  "main": "dist/backend/server.js",
+  "type": "module",
+  "scripts": {
+    "start": "node dist/backend/server.js",
+    "dev": "vite",
+    "build": "vite build && cpx \"src/backend/**/*\" dist/backend && rimraf dist/backend/node_modules && cpx package.json dist/ && cpx index.js dist/",
+    "lint": "eslint .",
+    "preview": "vite preview"
+  },
+  "dependencies": {
+    "bootstrap": "^5.3.3",
+    "bootstrap-icons": "^1.11.3",
+    "cors": "^2.8.5",
+    "express": "^4.21.1",
+    "mongodb": "^6.9.0",
+    "react": "^18.3.1",
+    "react-dom": "^18.3.1",
+    "react-router-dom": "^6.26.2"
+  },
+  "devDependencies": {
+    "@eslint/js": "^9.11.1",
+    "@types/react": "^18.3.11",
+    "@types/react-dom": "^18.3.1",
+    "@vitejs/plugin-react": "^3.0.0",
+    "cpx": "^1.5.0",
+    "rimraf": "^3.0.2",
+    "vite": "^4.0.0"
+  }
+}
