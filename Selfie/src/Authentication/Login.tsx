@@ -23,16 +23,13 @@ const Login: React.FC<LoginProps> = ({ switchToSignup }) => {
     };
 
     try {
-      const response = await fetch(
-        "mongodb://${gianluca.sperti}:${zeeN9eep}@${mongo_gianluca.sperti}?writeConcern=majority/api/login",
-        {
-          method: "POST",
-          headers: {
-            "Content-Type": "application/json",
-          },
-          body: JSON.stringify(data),
-        }
-      );
+      const response = await fetch("http://localhost:8000/api/login", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify(data),
+      });
 
       if (response.ok) {
         console.log("Login successful");
@@ -40,7 +37,7 @@ const Login: React.FC<LoginProps> = ({ switchToSignup }) => {
         navigate("/HomePage");
       } else {
         const errorMessage = await response.text();
-        console.error("Login failed:", errorMessage);
+        console.error("Login non riuscito:", errorMessage);
         setError(errorMessage);
       }
     } catch (err) {

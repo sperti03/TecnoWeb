@@ -1,28 +1,33 @@
 import express from 'express';
 import { MongoClient } from 'mongodb';
-import router from './backend/server.js'; // Assicurati che il percorso sia corretto
+import cors from 'cors';
+import userRoutes from './src/backend/LogSign.js'
+import noteRoutes from './src/backend/NoteController.js';
 
 const app = express();
 const port = 8000; // Porta per il server Express
 
-// Connessione a MongoDB tramite MongoClient
-const mongouri = 'mongodb://${gianluca.sperti}:${zeeN9eep}@${mongo_gianluca.sperti}?writeConcern=majority';
+// URI MongoDB 
+const mongoUri = 'mongodb://localhost:27017/selfie';
 
-const mongo = new MongoClient(mongouri);
+const mongo = new MongoClient(mongoUri);
 
 mongo.connect()
-  .then(() => {
+  .then(async () => {
     console.log('Connected to MongoDB with MongoClient');
   })
   .catch(err => {
     console.error('Failed to connect to MongoDB with MongoClient', err);
   });
 
+// Middleware
+app.use(cors());
 app.use(express.json());
 
-// Usa il router importato da server.js
-app.use('/', router);
+// Routes
+app.use('/', userRoutes);
+app.use('/',noteRoutes);
 
 app.listen(port, () => {
-  console.log(`Server running on http://localhost:${port}`);
+  console.log(`Server is running on port ${port}`);
 });

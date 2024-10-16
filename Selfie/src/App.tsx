@@ -8,6 +8,7 @@ import {
 import "./App.css";
 import AuthPage from "./Authentication/AuthPage";
 import HomePage from "./HomePage";
+import NoteHome from "./Note/NoteHome";
 
 function App() {
   return (
@@ -20,6 +21,8 @@ function App() {
           <Route path="/auth" element={<AuthPage />} />
           {/* Rotta per la home */}
           <Route path="/Homepage" element={<HomePage />} />
+          {/* Rotta per le Note */}
+          <Route path="/Note" element={<NoteHome />} />
         </Routes>
       </Router>
     </>

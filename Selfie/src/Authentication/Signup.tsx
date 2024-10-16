@@ -32,16 +32,13 @@ const Signup: React.FC<SignupProps> = ({ switchToLogin }) => {
     };
 
     try {
-      const response = await fetch(
-        "mongodb://${gianluca.sperti}:${zeeN9eep}@${mongo_gianluca.sperti}?writeConcern=majority/api/signup",
-        {
-          method: "POST",
-          headers: {
-            "Content-Type": "application/json",
-          },
-          body: JSON.stringify(data),
-        }
-      );
+      const response = await fetch("http://localhost:8000/api/signup", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify(data),
+      });
 
       if (response.ok) {
         console.log("signup successful");

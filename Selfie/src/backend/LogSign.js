@@ -2,37 +2,32 @@ import mongoose from 'mongoose';
 import express from 'express';
 import bodyParser from 'body-parser';
 import cors from 'cors';
+import User from './UserModel.js'
+import dotenv from 'dotenv'
 
-const router = express.Router();
+const userRoutes = express.Router();
+
 
 // Middleware
-router.use(cors());
-router.use(express.json());
+userRoutes.use(cors());
+userRoutes.use(express.json());
 
 // MongoDB connection
-const mongoUri = 'mongodb://${gianluca.sperti}:${zeeN9eep}@${mongo_gianluca.sperti}?writeConcern=majority';
+const mongoUri = 'mongodb://localhost:27017/selfie';
 mongoose.connect(mongoUri, {
 
 })
   .then(() => {
-    console.log('Connected to MongoDB');
+    console.log('Connected to MongoDB, logsign');
   })
   .catch(err => {
     console.error('Failed to connect to MongoDB', err);
   });
 
-// Schema and Model
-const userSchema = new mongoose.Schema({
-  username: { type: String, unique: true },
-  email: { type: String, unique: true },
-  password: String,
-  birthdate: Date,
-});
 
-const User = mongoose.model('User', userSchema);
 
 // Signup route
-router.post('/api/signup', async (req, res) => {
+userRoutes.post('/api/signup', async (req, res) => {
   const { username, email, password, birthdate } = req.body;
 
   try {
@@ -56,7 +51,7 @@ router.post('/api/signup', async (req, res) => {
 });
 
 // Login route
-router.post('/api/login', async (req, res) => {
+userRoutes.post('/api/login', async (req, res) => {
   const { username, password } = req.body;
 
   try {
@@ -67,12 +62,12 @@ router.post('/api/login', async (req, res) => {
 
     res.status(200).send('Login successful');
   } catch (error) {
-    res.status(500).send('Error logging in');
+    res.status(500).send('Error logging in :(');
   }
 });
 
 // Fetch data route
-router.get('/api/data', async (req, res) => {
+userRoutes.get('/api/data', async (req, res) => {
   try {
     const data = await User.find({});
     res.status(200).json(data);
@@ -82,4 +77,4 @@ router.get('/api/data', async (req, res) => {
 });
 
 
-export default router;
+export default userRoutes;
