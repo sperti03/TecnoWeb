@@ -15,12 +15,11 @@ const Signup: React.FC<SignupProps> = ({ switchToLogin }) => {
   const [error, setError] = useState("");
 
   const navigate = useNavigate();
-
   const handleSubmit = async (event: React.FormEvent) => {
     event.preventDefault();
 
-    if (password != confirmPassword) {
-      setError("le password non coincidono");
+    if (password !== confirmPassword) {
+      setError("Le password non coincidono");
       return;
     }
 
@@ -41,7 +40,10 @@ const Signup: React.FC<SignupProps> = ({ switchToLogin }) => {
       });
 
       if (response.ok) {
-        console.log("signup successful");
+        const responseData = await response.json();
+        const token = responseData.token; // Ottieni il token dalla risposta
+        localStorage.setItem("token", token); // Salva il token nel localStorage
+        console.log("Signup successful");
         setError("");
         navigate("/HomePage");
       } else {
@@ -51,7 +53,7 @@ const Signup: React.FC<SignupProps> = ({ switchToLogin }) => {
       }
     } catch (err) {
       console.error("Error:", err);
-      setError("errore duante il signup");
+      setError("Errore durante il signup");
     }
   };
 

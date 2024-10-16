@@ -3,7 +3,7 @@ import express from 'express';
 import bodyParser from 'body-parser';
 import cors from 'cors';
 import User from './UserModel.js'
-import dotenv from 'dotenv'
+import jwt from 'jsonwebtoken'
 
 const userRoutes = express.Router();
 
@@ -44,11 +44,17 @@ userRoutes.post('/api/signup', async (req, res) => {
     });
 
     await newUser.save();
-    res.status(201).send('User created');
+
+    // Genera un token JWT con l'ID dell'utente
+    const token = jwt.sign({ userId: newUser._id }, 'tuasecretkey', { expiresIn: '1h' });
+
+    // Restituisce il token al client
+    res.status(201).json({ token });
   } catch (error) {
     res.status(500).send('Error creating user');
   }
 });
+
 
 // Login route
 userRoutes.post('/api/login', async (req, res) => {
@@ -60,7 +66,11 @@ userRoutes.post('/api/login', async (req, res) => {
       return res.status(400).send('Credenziali non valide');
     }
 
-    res.status(200).send('Login successful');
+    // Genera un token JWT con l'ID dell'utente
+    const token = jwt.sign({ userId: user._id }, 'tuasecretkey', { expiresIn: '1h' });
+
+    // Restituisce il token al client
+    res.status(200).json({ token });
   } catch (error) {
     res.status(500).send('Error logging in :(');
   }

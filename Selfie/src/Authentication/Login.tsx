@@ -32,6 +32,9 @@ const Login: React.FC<LoginProps> = ({ switchToSignup }) => {
       });
 
       if (response.ok) {
+        const responseData = await response.json();
+        const token = responseData.token; // Ottieni il token dalla risposta
+        localStorage.setItem("token", token); // Salva il token nel localStorage
         console.log("Login successful");
         setError("");
         navigate("/HomePage");
