@@ -67,6 +67,39 @@ noteRoutes.post('/api/addnote', verifyToken, async (req, res) => {
   }
 });
 
+noteRoutes.put('/api/updatenote/:noteId', verifyToken, async (req, res) => {
+  const { title, content } = req.body;
+  const { noteId } = req.params;
+
+  if (!title || !content) {
+    return res.status(400).send('Title e contenuto sono obbligatori');
+  }
+
+  try {
+
+    const note = await Note.findById(noteId);
+    if (!note) {
+      console.error(`Nota con ID ${noteId} non trovata`);
+      return res.status(404).send('Nota non trovata');
+    }
+
+    // Verifico che la nota appartenga all'utente autenticato
+    if (note.userId.toString() !== req.userId) {
+      console.error(`Utente non autorizzato. Nota userId: ${note.userId}, req.userId: ${req.userId}`);
+      return res.status(403).send('Utente non autorizzato');
+    }
+
+    note.title = title;
+    note.content = content;
+    await note.save();
+
+    res.status(200).json(note);
+  } catch (error) {
+    console.error('Errore durante l\'aggiornamento della nota:', error);
+    res.status(500).send('Errore durante l\'aggiornamento, sucabene');
+  }
+});
+
 // Route per ottenere le note di un utente autenticato
 noteRoutes.get('/api/getnotes', verifyToken, async (req, res) => {
   try {
@@ -74,6 +107,20 @@ noteRoutes.get('/api/getnotes', verifyToken, async (req, res) => {
     res.status(200).json(notes);
   } catch (error) {
     res.status(500).send('Errore nel recupero delle note');
+  }
+});
+
+
+
+noteRoutes.delete('/api/deletenote/:noteId', verifyToken, async (req, res) => {
+  const { noteId } = req.params;
+
+  try {
+    await Note.findByIdAndDelete(noteId)
+    res.status(200).send('Eliminata con successo');
+  } catch (error) {
+    console.error('Errore durante l\'eliminazione della nota:', error);
+    res.status(500).send('Errore durante l\'eliminazione');
   }
 });
 

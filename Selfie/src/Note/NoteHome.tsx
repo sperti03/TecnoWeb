@@ -1,20 +1,34 @@
 import React, { useEffect, useState } from "react";
-import { getNotesForUser, addNoteForUser } from "./NoteService"; // Importa la funzione per aggiungere note
-import { Note, SortCriteria } from "./types";
+import {
+  getNotesForUser,
+  addNoteForUser,
+  updateNoteForUser,
+  deleteNoteForUser,
+} from "./NoteService"; // Importa la funzione per aggiungere note
+import NoteForm from "./EditNoteForm";
+import { SortCriteria, Note } from "./types";
 
 const NoteHome: React.FC = () => {
+  //per caricamento e ordinamento
   const [notes, setNotes] = useState<Note[]>([]);
   const [sortCriteria, setSortCriteria] = useState<SortCriteria>("date");
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [sortedNotes, setSortedNotes] = useState<Note[]>([]);
+
+  //per la add
   const [newNoteTitle, setNewNoteTitle] = useState("");
   const [newNoteContent, setNewNoteContent] = useState("");
+
+  //per la modifica
+  const [currentNote, setCurrentNote] = useState<Note | null>(null);
+  const [isEditFormVisible, setEditFormVisible] = useState(false);
 
   useEffect(() => {
     const fetchNotes = async () => {
       try {
         setLoading(true);
-        const fetchedNotes = await getNotesForUser(""); // Rimuovi il passaggio manuale dell'userId
+        const fetchedNotes = await getNotesForUser("");
         setNotes(fetchedNotes);
       } catch (err) {
         setError("Errore nel recupero delle note");
@@ -27,6 +41,28 @@ const NoteHome: React.FC = () => {
     fetchNotes();
   }, []);
 
+  //modifica nota
+  const handleUpdateNote = async (
+    noteId: string | null,
+    title: string,
+    content: string
+  ) => {
+    try {
+      const updatedNote = await updateNoteForUser(noteId, title, content);
+      setNotes(notes.map((note) => (note._id === noteId ? updatedNote : note))); // Aggiorna lo stato con la nota aggiornata
+      setCurrentNote(null); // Resetta la nota corrente
+      setEditFormVisible(false); // Nasconde il form di modifica
+    } catch (error) {
+      console.error("Errore nell'aggiornamento della nota:", error);
+    }
+  };
+
+  const handleEditNote = (note: Note) => {
+    setCurrentNote(note);
+    setEditFormVisible(true);
+  };
+
+  //aggiunta nota
   const handleAddNote = async (event: React.FormEvent) => {
     event.preventDefault();
 
@@ -44,6 +80,16 @@ const NoteHome: React.FC = () => {
     } catch (err) {
       setError("Errore durante l'aggiunta della nota");
       console.error(err);
+    }
+  };
+
+  const handleDeleteNote = async (noteId: string) => {
+    try {
+      await deleteNoteForUser(noteId);
+      setNotes(notes.filter((note) => note._id !== noteId));
+    } catch (error) {
+      setError("Errore durante l'eliminazione della nota");
+      console.error(error);
     }
   };
 
@@ -118,14 +164,19 @@ const NoteHome: React.FC = () => {
 
       <ul>
         {notes.map((note) => (
-          <li key={note.id}>
+          <li key={note._id}>
             <h3>{note.title}</h3>
             <p>{note.content}</p>
             <small>
               Creato il: {new Date(note.createdAt).toLocaleDateString()}
             </small>
+            <button onClick={() => handleEditNote(note)}>Modifica</button>
+            <button onClick={() => handleDeleteNote(note._id)}>Elimina</button>
           </li>
         ))}
+        {isEditFormVisible && currentNote && (
+          <NoteForm note={currentNote} onSave={handleUpdateNote} />
+        )}
       </ul>
     </div>
   );

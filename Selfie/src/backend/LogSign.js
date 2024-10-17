@@ -1,6 +1,5 @@
 import mongoose from 'mongoose';
 import express from 'express';
-import bodyParser from 'body-parser';
 import cors from 'cors';
 import User from './UserModel.js'
 import jwt from 'jsonwebtoken'

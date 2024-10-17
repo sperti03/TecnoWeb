@@ -1,11 +1,10 @@
 export interface Note {
-  id: string;
+  _id: string;
   title: string;
   content: string;
-  userId: string;
   createdAt: Date;
-  updatedAt: Date;
+  userId: string;
 }
-  
+
   export type SortCriteria = 'title' | 'date' | 'length';
   
