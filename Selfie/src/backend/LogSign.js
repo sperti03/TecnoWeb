@@ -45,7 +45,7 @@ userRoutes.post('/api/signup', async (req, res) => {
     await newUser.save();
 
     // Genera un token JWT con l'ID dell'utente
-    const token = jwt.sign({ userId: newUser._id }, 'tuasecretkey', { expiresIn: '1h' });
+    const token = jwt.sign({ userId: newUser._id, username: newUser.username }, 'tuasecretkey', { expiresIn: '1h' });
 
     // Restituisce il token al client
     res.status(201).json({ token });
@@ -66,7 +66,7 @@ userRoutes.post('/api/login', async (req, res) => {
     }
 
     // Genera un token JWT con l'ID dell'utente
-    const token = jwt.sign({ userId: user._id }, 'tuasecretkey', { expiresIn: '1h' });
+    const token = jwt.sign({ userId: user._id, username: user.username }, 'tuasecretkey', { expiresIn: '1h' });
 
     // Restituisce il token al client
     res.status(200).json({ token });

@@ -7,6 +7,7 @@ import {
 } from "./NoteService"; // Importa la funzione per aggiungere note
 import NoteForm from "./EditNoteForm";
 import { SortCriteria, Note } from "./types";
+import { marked } from "marked";
 
 const NoteHome: React.FC = () => {
   //per caricamento e ordinamento
@@ -166,7 +167,9 @@ const NoteHome: React.FC = () => {
         {notes.map((note) => (
           <li key={note._id}>
             <h3>{note.title}</h3>
-            <p>{note.content}</p>
+            <div
+              dangerouslySetInnerHTML={{ __html: marked(note.content) }}
+            ></div>
             <small>
               Creato il: {new Date(note.createdAt).toLocaleDateString()}
             </small>
@@ -180,6 +183,20 @@ const NoteHome: React.FC = () => {
       </ul>
     </div>
   );
+};
+
+export const returnfirstNote = async () => {
+  try {
+    const notes = await getNotesForUser(""); // Ottieni le note dell'utente
+    if (notes.length > 0) {
+      return notes[0]; // Restituisci la prima nota se esiste
+    } else {
+      return null; // Nessuna nota trovata
+    }
+  } catch (error) {
+    console.error("Errore nel recupero della prima nota:", error);
+    return null;
+  }
 };
 
 export default NoteHome;

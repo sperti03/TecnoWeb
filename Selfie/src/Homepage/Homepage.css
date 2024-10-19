@@ -1,0 +1,106 @@
+/* Global styles */
+body {
+    font-family: 'Roboto', sans-serif;
+    background-color: #f4f4f9;
+
+  }
+  
+  .homepage-container {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    background: linear-gradient(to right, #20208b, #0072b8);
+    height: 100%;
+    width: 100%;
+  }
+  
+  .greeting-section {
+    color:white;
+    width: 100%;
+    height: 20%;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+  }
+  
+  .card-container {
+    display: flex;
+    justify-content: center;
+    gap: 20px;
+    margin-top: 20px;
+    width: 100%;
+    height: 80%;
+  }
+  
+  .homecard {
+    display: flex;
+    flex-direction: column;
+    justify-content: space-between;
+    background-color: #ffffff;
+    border-radius: 8px;
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+    width:25%;
+    height: 50%;
+    transition: transform 0.2s ease, box-shadow 0.2s ease;
+  }
+  
+  .card-body {
+    text-align: center;
+    color: #333;
+    flex-grow: 1;
+  }
+  
+  
+  .homecard:hover {
+    transform: translateY(-5px);
+    box-shadow: 0 8px 16px rgba(0, 0, 0, 0.2);
+  }
+  
+  /* Button styling */
+  .button-card {
+    background: #0072b8;
+    border: 1px solid #0072b8;
+    width: 100%;
+    color: white;
+    padding: 10px 20px;
+    border: none;
+    border-radius: 5px;
+    cursor: pointer;
+    font-size: 16px;
+    transition: background-color 0.3s ease;
+  }
+  
+  .bottom {
+    margin-top: auto; /* Spinge il bottone verso il basso */
+    padding: 10px 20px; /* Se desideri aggiungere un padding specifico */
+    }
+
+  .btn-primary:hover {
+    background-color: #0265a2;
+  }
+
+  .cardtitle{
+    height: 20%;
+    background: #0072b8;
+    border-radius: 5px 5px 0 0;
+    color: #fff;
+    font-size: 30px;
+    font-weight: 600;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+  }
+  
+  /* Mobile responsiveness */
+  @media (max-width: 768px) {
+    .card-container {
+      flex-direction: column;
+      align-items: center;
+    }
+  
+    .homecard {
+      width: 100%;
+      max-width: 300px;
+    }
+  }
+  

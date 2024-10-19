@@ -7,7 +7,7 @@ import {
 
 import "./App.css";
 import AuthPage from "./Authentication/AuthPage";
-import HomePage from "./HomePage";
+import HomePage from "./Homepage/HomePage";
 import NoteHome from "./Note/NoteHome";
 
 function App() {
