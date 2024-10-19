@@ -48,6 +48,9 @@ body {
     text-align: center;
     color: #333;
     flex-grow: 1;
+    word-wrap: break-word;
+    overflow-wrap: break-word;
+    margin: 15px;
   }
   
   
