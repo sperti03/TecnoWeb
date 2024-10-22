@@ -1,24 +1,30 @@
 import React, { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import Message from "./Message";
-import "./HomePage.css"; // Importiamo un file CSS separato per lo styling
-import { returnfirstNote } from "./../Note/NoteHome"; // Importa la funzione returnfirstNote
-import { Note } from "./../Note/types"; // Assicurati di avere un tipo Note definito
+import "./HomePage.css";
+import { returnfirstNote } from "./../Note/NoteHome";
+import { Note, SortCriteria } from "./../Note/types";
 
 function HomePage() {
-  const [firstNote, setFirstNote] = useState<Note | null>(null); // Stato per la prima nota
-  const [loading, setLoading] = useState(true); // Stato per il caricamento
+  const [firstNote, setFirstNote] = useState<Note | null>(null);
+  const [loading, setLoading] = useState(true);
+  const [sortCriteria, setSortCriteria] = useState<SortCriteria>("date");
   const navigate = useNavigate();
 
   useEffect(() => {
     const fetchFirstNote = async () => {
-      const note = await returnfirstNote(); // Chiama la funzione che recupera la prima nota
-      setFirstNote(note); // Salva la nota nello stato
-      setLoading(false); // Fine del caricamento
+      const note = await returnfirstNote(sortCriteria);
+      setFirstNote(note);
+      setLoading(false);
     };
 
     fetchFirstNote();
-  }, []); // Effetto per il caricamento della prima nota al montaggio del componente
+  }, [sortCriteria]);
+
+  // Funzione per gestire il cambiamento del criterio di ordinamento
+  const handleSortChange = (e: React.ChangeEvent<HTMLSelectElement>) => {
+    setSortCriteria(e.target.value as SortCriteria);
+  };
 
   return (
     <div className="homepage-container">
@@ -35,21 +41,32 @@ function HomePage() {
         <div className="homecard">
           <div className="cardtitle">Note</div>
           <div className="card-body">
-            {firstNote && (
+            {loading ? (
+              <p>Caricamento...</p>
+            ) : firstNote ? (
               <>
                 <h4>{firstNote.title}</h4>
-                <p>{firstNote.content.slice(0, 200)}...</p>{" "}
+                <p>{firstNote.content.slice(0, 200)}...</p>
               </>
+            ) : (
+              <p>Nessuna Nota</p>
             )}
-
-            {!firstNote && <p>Nessuna Nota</p>}
           </div>
           <button
-            className="button-card   bottom"
+            className="button-card bottom"
             onClick={() => navigate("/Note")}
           >
             Vai a tutte le note
           </button>
+
+          <div>
+            <label htmlFor="sort">Ordina per:</label>
+            <select id="sort" value={sortCriteria} onChange={handleSortChange}>
+              <option value="title">Titolo</option>
+              <option value="date">Data</option>
+              <option value="length">Lunghezza</option>
+            </select>
+          </div>
         </div>
 
         <div className="homecard">

@@ -4,6 +4,7 @@ export interface Note {
   content: string;
   createdAt: Date;
   userId: string;
+  AccessList: string[];
 }
 
   export type SortCriteria = 'title' | 'date' | 'length';

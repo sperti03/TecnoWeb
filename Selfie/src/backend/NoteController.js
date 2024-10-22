@@ -4,7 +4,24 @@ import cors from 'cors';
 import User from './UserModel.js';
 import Note from './NoteModel.js';
 import jwt from 'jsonwebtoken';
+import {jwtDecode } from "jwt-decode"; // Importa jwt-decode e JwtPayload
 
+
+/**
+ * @typedef {Object} JwtPayload
+ * @property {string} [iss] - Issuer
+ * @property {string} [sub] - Subject
+ * @property {string} [aud] - Audience
+ * @property {number} [exp] - Expiration time
+ * @property {number} [nbf] - Not before
+ * @property {number} [iat] - Issued at
+ * @property {string} [jti] - JWT ID
+ */
+
+/**
+ * @typedef {JwtPayload} DecodedToken
+ * @property {string} [username] - Aggiungi il campo username
+ */
 
 const noteRoutes = express.Router();
 
@@ -45,10 +62,10 @@ const verifyToken = (req, res, next) => {
 };
 
 
-// Route per creare una nuova nota
+
 noteRoutes.post('/api/addnote', verifyToken, async (req, res) => {
-  const { title, content } = req.body;
-  
+  const { title, content, accessType, limitedUsers } = req.body;
+
   if (!title || !content) {
     return res.status(400).send('Title e contenuto sono obbligatori');
   }
@@ -58,6 +75,8 @@ noteRoutes.post('/api/addnote', verifyToken, async (req, res) => {
       title,
       content,
       userId: req.userId, // Associamo la nota all'utente autenticato
+      accessType: accessType,
+      limitedUsers: accessType === 'limited' ? limitedUsers : [],
     });
 
     await newNote.save();
@@ -66,6 +85,7 @@ noteRoutes.post('/api/addnote', verifyToken, async (req, res) => {
     res.status(500).send('Errore durante la creazione della nota');
   }
 });
+
 
 noteRoutes.put('/api/updatenote/:noteId', verifyToken, async (req, res) => {
   const { title, content } = req.body;
@@ -100,10 +120,35 @@ noteRoutes.put('/api/updatenote/:noteId', verifyToken, async (req, res) => {
   }
 });
 
-// Route per ottenere le note di un utente autenticato
+
 noteRoutes.get('/api/getnotes', verifyToken, async (req, res) => {
+   // Recupera il token dall'header di autorizzazione
+  const token = req.headers['authorization']?.split(' ')[1];
+
+   if (!token) {
+     return res.status(401).send("Token non trovato");
+   }
+
+   // Decodifica il token per ottenere lo username
+   let username;
+   try {
+     const decodedToken = jwtDecode(token);
+     username = decodedToken.username; 
+   } catch (error) {
+     return res.status(400).send("Errore nella decodifica del token");
+   }
+
   try {
-    const notes = await Note.find({ userId: req.userId }); // Filtra le note per userId
+    const notes = await Note.find({ 
+      $or: [
+        { userId: req.userId }, // L'utente può vedere le proprie note
+        { accessType: 'public' }, // Le note pubbliche possono essere viste da tutti
+        { 
+          accessType: 'limited', 
+          limitedUsers: { $in: [username] } // L'utente può vedere le note limitate se è nella lista
+        }
+      ] 
+    });
     res.status(200).json(notes);
   } catch (error) {
     res.status(500).send('Errore nel recupero delle note');

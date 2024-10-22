@@ -20,6 +20,8 @@ const NoteHome: React.FC = () => {
   //per la add
   const [newNoteTitle, setNewNoteTitle] = useState("");
   const [newNoteContent, setNewNoteContent] = useState("");
+  const [newAccessType, setNewAccessType] = useState("public"); // Aggiungi stato per il tipo di accesso
+  const [newLimitedUsers, setNewLimitedUsers] = useState<string[]>([]); // Aggiungi stato per la lista limitata
 
   //per la modifica
   const [currentNote, setCurrentNote] = useState<Note | null>(null);
@@ -63,7 +65,7 @@ const NoteHome: React.FC = () => {
     setEditFormVisible(true);
   };
 
-  //aggiunta nota
+  // Aggiunta nota
   const handleAddNote = async (event: React.FormEvent) => {
     event.preventDefault();
 
@@ -73,10 +75,17 @@ const NoteHome: React.FC = () => {
     }
 
     try {
-      const newNote = await addNoteForUser(newNoteTitle, newNoteContent);
-      setNotes([...notes, newNote]); // Aggiungi la nuova nota alla lista esistente
-      setNewNoteTitle(""); // Resetta i campi del form
+      const newNote = await addNoteForUser(
+        newNoteTitle,
+        newNoteContent,
+        newAccessType,
+        newLimitedUsers
+      ); // Includi gli altri parametri
+      setNotes([...notes, newNote]);
+      setNewNoteTitle("");
       setNewNoteContent("");
+      setNewAccessType("public");
+      setNewLimitedUsers([]);
       setError(null);
     } catch (err) {
       setError("Errore durante l'aggiunta della nota");
@@ -146,6 +155,42 @@ const NoteHome: React.FC = () => {
             onChange={(e) => setNewNoteContent(e.target.value)}
             required
           />
+          <div>
+            <label htmlFor="newAccessType">Tipo di accesso:</label>
+            <select
+              id="newAccessType"
+              value={newAccessType}
+              onChange={(e) => setNewAccessType(e.target.value)}
+            >
+              <option value="public">Pubblica</option>
+              <option value="private">Privata</option>
+              <option value="limited">Limitata</option>
+            </select>
+          </div>
+
+          {newAccessType === "limited" && (
+            <div>
+              <input
+                type="text"
+                placeholder="Aggiungi username"
+                onKeyDown={(e) => {
+                  if (e.key === "Enter") {
+                    e.preventDefault();
+                    const username = e.currentTarget.value.trim();
+                    if (username && !newLimitedUsers.includes(username)) {
+                      setNewLimitedUsers([...newLimitedUsers, username]);
+                    }
+                    e.currentTarget.value = "";
+                  }
+                }}
+              />
+              <ul>
+                {newLimitedUsers.map((user, index) => (
+                  <li key={index}>{user}</li>
+                ))}
+              </ul>
+            </div>
+          )}
         </div>
         <button type="submit">Aggiungi nota</button>
       </form>
@@ -185,11 +230,30 @@ const NoteHome: React.FC = () => {
   );
 };
 
-export const returnfirstNote = async () => {
+export const returnfirstNote = async (sortCriteria: SortCriteria) => {
   try {
     const notes = await getNotesForUser(""); // Ottieni le note dell'utente
+
     if (notes.length > 0) {
-      return notes[0]; // Restituisci la prima nota se esiste
+      // Ordina le note in base al criterio selezionato
+      switch (sortCriteria) {
+        case "title":
+          notes.sort((a: Note, b: Note) => a.title.localeCompare(b.title));
+          break;
+        case "date":
+          notes.sort(
+            (a: Note, b: Note) =>
+              new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime()
+          );
+          break;
+        case "length":
+          notes.sort((a: Note, b: Note) => a.content.length - b.content.length);
+          break;
+        default:
+          break;
+      }
+
+      return notes[0]; // Restituisci la prima nota in base all'ordinamento
     } else {
       return null; // Nessuna nota trovata
     }
