@@ -1,0 +1,44 @@
+/* Calendar.css */
+
+/* Cambia il colore di sfondo della cella del giorno */
+.rbc-day-bg {
+    background-color: #f5f5f5;
+  }
+  
+  /* Cambia il colore di sfondo per i giorni del fine settimana */
+  .rbc-day-bg:nth-child(6), /* Sabato */
+  .rbc-day-bg:nth-child(7)  /* Domenica */ {
+    background-color: #e6f7ff;
+  }
+  
+  /* Cambia lo stile del testo degli eventi */
+  .rbc-event {
+    background-color: #4caf50; /* Verde */
+    color: white;
+    font-weight: bold;
+    border-radius: 4px;
+    padding: 5px;
+    box-shadow: 2px 2px 4px rgba(0, 0, 0, 0.2);
+  }
+  
+  /* Cambia lo stile del titolo del calendario */
+  .rbc-toolbar-label {
+    font-size: 1.5rem;
+    color: #007bff;
+    font-weight: 600;
+  }
+  
+  /* Cambia lo stile dei pulsanti di navigazione (settimana, mese, giorno) */
+  .rbc-btn-group button {
+    background-color: #007bff;
+    color: white;
+    border: none;
+    padding: 5px 10px;
+    border-radius: 4px;
+    margin: 0 5px;
+    cursor: pointer;
+  }
+  
+  .rbc-btn-group button:hover {
+    background-color: #0056b3;
+  }
