@@ -3,12 +3,13 @@ import { MongoClient } from 'mongodb';
 import cors from 'cors';
 import userRoutes from './src/backend/LogSign.js'
 import noteRoutes from './src/backend/NoteController.js';
-
+import calendarRoutes from './src/backend/CalendarController.js';
 const app = express();
-const port = 8000; // Porta per il server Express
+const port = 5000; // Porta per il server Express
+
 
 // URI MongoDB 
-const mongoUri = 'mongodb://localhost:27017/selfie';
+const mongoUri = 'mongodb+srv://selfie:selfie@cluster0.0jvaz.mongodb.net/?retryWrites=true&w=majority&appName=Cluster0';
 
 const mongo = new MongoClient(mongoUri);
 
@@ -27,7 +28,9 @@ app.use(express.json());
 // Routes
 app.use('/', userRoutes);
 app.use('/',noteRoutes);
+app.use('/',calendarRoutes);
 
-app.listen(port, () => {
+
+app.listen(port,'0.0.0.0', () => {
   console.log(`Server is running on port ${port}`);
 });
