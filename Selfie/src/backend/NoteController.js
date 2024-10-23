@@ -31,7 +31,7 @@ noteRoutes.use(cors());
 noteRoutes.use(express.json());
 
 // Connessione a MongoDB
-const mongoUri = 'mongodb://localhost:27017/selfie';
+const mongoUri = 'mongodb+srv://selfie:selfie@cluster0.0jvaz.mongodb.net/?retryWrites=true&w=majority&appName=Cluster0';
 mongoose.connect(mongoUri, {
 })
   .then(() => {
