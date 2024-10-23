@@ -1,9 +1,7 @@
 import { Message } from "./MessageTypes";
 import React, { useState } from "react";
-import express from "express";
-import mongoose from "mongoose";
 import { SendMessageToUser, getMessagesForUser } from "./MessageService";
-import User from "./../backend/UserModel";
+import "./MessageList.css";
 
 const MessageList: React.FC = () => {
   const [messages, setMessages] = useState<Message[]>([]);
@@ -37,18 +35,14 @@ const MessageList: React.FC = () => {
       console.error(error);
     }
   };
-
   return (
     <>
-      <button onClick={toggleMessageList}>
-        <i className="bi bi-chat"></i>
-      </button>
+      <div className={`message-list-container ${isOpen ? "open" : ""}`}>
+        <button className="chat-button" onClick={toggleMessageList}>
+          <i className="bi bi-chat"></i>
+        </button>
 
-      {isOpen && (
         <div className="message-list">
-          <button className="close-button" onClick={toggleMessageList}>
-            &times; {/* Icona della X */}
-          </button>
           <div className="tab-headers">
             <h3
               onClick={() => setActiveTab("send")}
@@ -66,7 +60,6 @@ const MessageList: React.FC = () => {
             </h3>
           </div>
 
-          {/* Sezione Invia Messaggio */}
           {activeTab === "send" && (
             <div className="message-send">
               <h3>Invia un messaggio</h3>
@@ -89,21 +82,20 @@ const MessageList: React.FC = () => {
             </div>
           )}
 
-          {/* Sezione Messaggi Ricevuti */}
           {activeTab === "received" && (
             <div className="message-received">
               <h3>Messaggi ricevuti</h3>
               <ul>
                 {messages.map((message) => (
                   <li key={message._id}>
-                    <strong>{message.senderId}:</strong> {message.content}
+                    <strong>{message.username}:</strong> {message.content}
                   </li>
                 ))}
               </ul>
             </div>
           )}
         </div>
-      )}
+      </div>
     </>
   );
 };

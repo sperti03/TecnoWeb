@@ -41,20 +41,21 @@ const verifyToken = (req, res, next) => {
   
       // Salva il userId decodificato nella richiesta per uso successivo
       req.userId = decoded.userId;
+      req.username = decoded.username;
       next();
     });
   };
 
   messageRoutes.post('/api/sendmessage', verifyToken, async (req, res) => {
-    const { content, username } = req.body;  // Ricevi il contenuto e lo username del destinatario
+    const { content, dest } = req.body;  // Ricevi il contenuto e lo username del destinatario
     const senderId = req.userId;  // Prendi il senderId dal token JWT
-  
-    if (!content || !username) {
+    const username= req.username;
+    if (!content || !dest) {
       return res.status(400).send('Destinatario (username) e contenuto sono obbligatori');
     }
   
     try {
-      const destUser = await User.findOne({ username });
+      const destUser = await User.findOne({ username: dest });
   
       if (!destUser) {
         return res.status(404).send('Destinatario non trovato');
@@ -72,6 +73,7 @@ const verifyToken = (req, res, next) => {
         content,
         senderId,
         destId,
+        username,
       });
   
       // Salva il messaggio nel database

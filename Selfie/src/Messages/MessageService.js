@@ -1,4 +1,4 @@
-export const SendMessageToUser = async (content,username) => {
+export const SendMessageToUser = async (content,dest) => {
     const token = localStorage.getItem('token');
   
     if (!token) {
@@ -11,7 +11,7 @@ export const SendMessageToUser = async (content,username) => {
         'Content-Type': 'application/json',
         'Authorization': `Bearer ${token}`,
       },
-      body: JSON.stringify({ content, username }),
+      body: JSON.stringify({ content, dest }),
     });
   
     if (!response.ok) {

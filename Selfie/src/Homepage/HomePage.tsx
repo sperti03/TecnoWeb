@@ -30,11 +30,13 @@ function HomePage() {
   return (
     <div className="homepage-container">
       <div className="greeting-section">
-        <i className="bi bi-gear"></i>
         <Hello />
       </div>
+      <div className="nav-bar">
+        <i className="bi bi-gear"></i>
+        <MessageList />
+      </div>
 
-      <MessageList />
       <div className="card-container">
         <div className="homecard">
           <div className="cardtitle">Calendario</div>

@@ -3,5 +3,6 @@ export interface Message {
     content: string;
     senderId: string;
     destId:string;
+    username: string;
   }
   

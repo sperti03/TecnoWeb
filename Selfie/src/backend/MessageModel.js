@@ -15,6 +15,10 @@ const MessageSchema = new mongoose.Schema({
     ref: 'User',
     required: true,
   },
+  username:{
+    type: String,
+    required:true,
+  },
 });
 
 const Message = mongoose.model('Message', MessageSchema);
