@@ -1,7 +1,6 @@
 import express from 'express';
 import mongoose from 'mongoose';
 import cors from 'cors';
-import User from './UserModel.js';
 import Note from './NoteModel.js';
 import jwt from 'jsonwebtoken';
 import {jwtDecode } from "jwt-decode"; // Importa jwt-decode e JwtPayload

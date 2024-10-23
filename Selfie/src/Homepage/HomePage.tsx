@@ -1,6 +1,7 @@
 import React, { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
-import Message from "./Message";
+import Hello from "./Hello";
+import MessageList from "../Messages/MessageList";
 import "./HomePage.css";
 import { returnfirstNote } from "./../Note/NoteHome";
 import { Note, SortCriteria } from "./../Note/types";
@@ -29,9 +30,11 @@ function HomePage() {
   return (
     <div className="homepage-container">
       <div className="greeting-section">
-        <Message />
+        <i className="bi bi-gear"></i>
+        <Hello />
       </div>
 
+      <MessageList />
       <div className="card-container">
         <div className="homecard">
           <div className="cardtitle">Calendario</div>

@@ -1,0 +1,91 @@
+.message-list {
+    position: fixed;
+    top: 50%; /* Centra verticalmente */
+    left: 50%; /* Centra orizzontalmente */
+    transform: translate(-50%, -50%); /* Sposta la finestra per centrarla esattamente */
+    width: 300px;
+    height: 600px;
+    max-height: 400px;
+    overflow-y: auto;
+    background-color: white;
+    border: 1px solid #ccc;
+    border-radius: 8px;
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+    padding: 15px;
+    z-index: 1000; /* Assicura che sia sopra gli altri elementi */
+  }
+  
+  /* Stile per il pulsante di chiusura */
+  .close-button {
+    position: absolute;
+    top: 10px;
+    right: 10px;
+    background: none;
+    border: none;
+    font-size: 20px;
+    cursor: pointer;
+    color: #007bff; /* Colore della X */
+  }
+  
+  .tab-headers {
+    display: flex;
+    cursor: pointer;
+    margin-bottom: 20px;
+  }
+  
+  .tab-headers h3 {
+    flex: 1;
+    padding: 10px;
+    text-align: center;
+    background-color: #f1f1f1;
+    border: 1px solid #ccc;
+    margin: 0;
+  }
+  
+  .tab-headers h3.active {
+    background-color: #007bff;
+    color: white;
+    font-weight: bold;
+    border-bottom: 1px solid transparent; /* per far sembrare che sia sopra */
+  }
+  
+  .message-send,
+  .message-received {
+    border: 1px solid #ccc;
+    padding: 10px;
+    background-color: #fff;
+    border-radius: 5px;
+  }
+  
+
+/* Input e textarea */
+input[type="text"], textarea {
+    width: 100%; /* Larghezza al 100% */
+    padding: 10px; /* Spazio interno */
+    border: 1px solid #dcdcdc; /* Bordo chiaro */
+    border-radius: 5px; /* Angoli arrotondati */
+    margin-bottom: 10px; /* Spazio sotto gli input */
+    transition: border-color 0.3s; /* Transizione fluida per il colore del bordo */
+}
+
+/* Focus sugli input e textarea */
+input[type="text"]:focus, textarea:focus {
+    border-color: #007bff; /* Colore del bordo blu al focus */
+    outline: none; /* Rimuove l'outline predefinito */
+}
+
+/* Pulsante di invio */
+button[type="submit"] {
+    background-color: #007bff; /* Colore blu del pulsante */
+    color: white; /* Testo bianco */
+    border: none; /* Rimuove il bordo */
+    padding: 10px 15px; /* Spazio interno */
+    border-radius: 5px; /* Angoli arrotondati */
+    cursor: pointer; /* Cambia il cursore al passaggio del mouse */
+    transition: background-color 0.3s; /* Transizione per il colore di sfondo */
+}
+
+/* Effetto hover per il pulsante di invio */
+button[type="submit"]:hover {
+    background-color: #0056b3; /* Colore blu scuro al passaggio del mouse */
+}

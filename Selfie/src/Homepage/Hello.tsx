@@ -1,11 +1,11 @@
-import { JwtPayload, jwtDecode } from "jwt-decode"; // Importa jwt-decode e JwtPayload
+import { JwtPayload, jwtDecode } from "jwt-decode";
 
 // Definisci l'interfaccia che estende JwtPayload
 interface DecodedToken extends JwtPayload {
-  username?: string; // Aggiungi il campo username
+  username?: string;
 }
 
-function Message() {
+function Hello() {
   const token = localStorage.getItem("token");
   let name = "Stranger";
 
@@ -24,4 +24,4 @@ function Message() {
   return <h1>Hello {name} lesgosky</h1>;
 }
 
-export default Message;
+export default Hello;

@@ -4,8 +4,9 @@ import cors from 'cors';
 import userRoutes from './src/backend/LogSign.js'
 import noteRoutes from './src/backend/NoteController.js';
 import calendarRoutes from './src/backend/CalendarController.js';
+import messageRoutes from './src/backend/MessageController.js'
 const app = express();
-const port = 5000; // Porta per il server Express
+const port = 8000; // Porta per il server Express
 
 
 // URI MongoDB 
@@ -29,7 +30,7 @@ app.use(express.json());
 app.use('/', userRoutes);
 app.use('/',noteRoutes);
 app.use('/',calendarRoutes);
-
+app.use('/', messageRoutes);
 
 app.listen(port,'0.0.0.0', () => {
   console.log(`Server is running on port ${port}`);
