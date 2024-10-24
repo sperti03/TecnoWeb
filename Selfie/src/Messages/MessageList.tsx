@@ -84,11 +84,10 @@ const MessageList: React.FC = () => {
 
           {activeTab === "received" && (
             <div className="message-received">
-              <h3>Messaggi ricevuti</h3>
               <ul>
                 {messages.map((message) => (
                   <li key={message._id}>
-                    <strong>{message.username}:</strong> {message.content}
+                    <strong>{message.username} </strong> {message.content}
                   </li>
                 ))}
               </ul>
