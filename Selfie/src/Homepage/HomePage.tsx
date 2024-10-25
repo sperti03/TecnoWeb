@@ -22,7 +22,6 @@ function HomePage() {
     fetchFirstNote();
   }, [sortCriteria]);
 
-  // Funzione per gestire il cambiamento del criterio di ordinamento
   const handleSortChange = (e: React.ChangeEvent<HTMLSelectElement>) => {
     setSortCriteria(e.target.value as SortCriteria);
   };
@@ -40,7 +39,9 @@ function HomePage() {
       <div className="card-container">
         <div className="homecard">
           <div className="cardtitle">Calendario</div>
-          <div className="card-body"></div>
+          <div className="card-body">
+            <p></p>
+          </div>
         </div>
 
         <div className="homecard">

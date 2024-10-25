@@ -3,9 +3,8 @@ import mongoose from 'mongoose';
 import cors from 'cors';
 import Note from './NoteModel.js';
 import jwt from 'jsonwebtoken';
-import {jwtDecode } from "jwt-decode"; // Importa jwt-decode e JwtPayload
-
-
+import {jwtDecode } from "jwt-decode"; 
+import TimeMachineInterface from '../TimeMachine/TimeMachineInterface.js';
 /**
  * @typedef {Object} JwtPayload
  * @property {string} [iss] - Issuer
@@ -64,7 +63,6 @@ const verifyToken = (req, res, next) => {
 
 noteRoutes.post('/api/addnote', verifyToken, async (req, res) => {
   const { title, content, accessType, limitedUsers } = req.body;
-
   if (!title || !content) {
     return res.status(400).send('Title e contenuto sono obbligatori');
   }
@@ -74,6 +72,7 @@ noteRoutes.post('/api/addnote', verifyToken, async (req, res) => {
       title,
       content,
       userId: req.userId, // Associamo la nota all'utente autenticato
+      createdAt: TimeMachineInterface.getCurrentTime(),
       accessType: accessType,
       limitedUsers: accessType === 'limited' ? limitedUsers : [],
     });

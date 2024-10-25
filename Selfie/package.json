@@ -1,16 +1,16 @@
 {
   "name": "selfie",
   "version": "0.0.0",
-  "main": "dist/backend/server.js",
+  "main": "dist/index.js",
   "type": "module",
   "scripts": {
-    "start": "node dist/backend/server.js",
+    "start": "node dist/index.js",
     "dev": "vite",
-    "build": "vite build && cpx \"src/backend/**/*\" dist/backend && cpx package.json dist/ && cpx index.js dist/ && npm run copy-node-modules && npm run link-node-modules",
+    "build": "vite build && tsc --project tsconfig.node.json && cpx package.json dist/ && cpx index.js dist/ && npm run copy-node-modules && npm run link-node-modules",
     "lint": "eslint .",
     "preview": "vite preview",
     "copy-node-modules": "ncp ./node_modules dist/node_modules",
-    "link-node-modules": "symlink-dir dist/node_modules dist/backend/node_modules"
+    "link-node-modules": "symlink-dir dist/node_modules dist/src/backend/node_modules"
   },
   "dependencies": {
     "@emotion/react": "^11.13.3",
@@ -35,8 +35,9 @@
   "devDependencies": {
     "@types/express": "^5.0.0",
     "@types/jsonwebtoken": "^9.0.7",
+    "@types/moment": "^2.13.0",
     "@types/node": "^22.7.5",
-    "@types/react": "^18.3.11",
+    "@types/react": "^18.3.12",
     "@types/react-big-calendar": "^1.8.12",
     "@types/react-dom": "^18.3.1",
     "@vitejs/plugin-react": "^4.3.2",

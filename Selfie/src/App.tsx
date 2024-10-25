@@ -3,29 +3,36 @@ import {
   Routes,
   Route,
   Navigate,
+  useLocation,
 } from "react-router-dom";
 
 import "./App.css";
 import AuthPage from "./Authentication/AuthPage";
 import HomePage from "./Homepage/HomePage";
 import NoteHome from "./Note/NoteHome";
+import TimeMachineComponent from "./TimeMachine/TimeMachine";
+
+function Layout() {
+  const location = useLocation();
+
+  return (
+    <>
+      {location.pathname !== "/auth" && <TimeMachineComponent />}
+      <Routes>
+        <Route path="/" element={<Navigate to="/auth" />} />
+        <Route path="/auth" element={<AuthPage />} />
+        <Route path="/Homepage" element={<HomePage />} />
+        <Route path="/Note" element={<NoteHome />} />
+      </Routes>
+    </>
+  );
+}
 
 function App() {
   return (
-    <>
-      <Router>
-        <Routes>
-          {/* Rotta predefinita che reindirizza a /auth */}
-          <Route path="/" element={<Navigate to="/auth" />} />
-          {/* Rotta per login e sign up */}
-          <Route path="/auth" element={<AuthPage />} />
-          {/* Rotta per la home */}
-          <Route path="/Homepage" element={<HomePage />} />
-          {/* Rotta per le Note */}
-          <Route path="/Note" element={<NoteHome />} />
-        </Routes>
-      </Router>
-    </>
+    <Router>
+      <Layout />
+    </Router>
   );
 }
 
