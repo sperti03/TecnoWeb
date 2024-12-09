@@ -11,6 +11,7 @@ import AuthPage from "./Authentication/AuthPage";
 import HomePage from "./Homepage/HomePage";
 import NoteHome from "./Note/NoteHome";
 import TimeMachineComponent from "./TimeMachine/TimeMachine";
+import CalendarHome from "./calendar/Calendar";
 
 function Layout() {
   const location = useLocation();
@@ -23,6 +24,7 @@ function Layout() {
         <Route path="/auth" element={<AuthPage />} />
         <Route path="/Homepage" element={<HomePage />} />
         <Route path="/Note" element={<NoteHome />} />
+        <Route path="/CalendarHome" element={<CalendarHome />} />
       </Routes>
     </>
   );
