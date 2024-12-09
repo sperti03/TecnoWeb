@@ -3,7 +3,7 @@ import { MongoClient } from 'mongodb';
 import cors from 'cors';
 import userRoutes from './src/backend/LogSign.js'
 import noteRoutes from './src/backend/NoteController.js';
-import calendarRoutes from './src/backend/CalendarController.js';
+import CalendarRoutes from './src/backend/CalendarController.js';
 import messageRoutes from './src/backend/MessageController.js'
 import timeRoute from './src/backend/TimeMachineController.js'
 
@@ -31,7 +31,7 @@ app.use(express.json());
 // Routes
 app.use('/', userRoutes);
 app.use('/',noteRoutes);
-app.use('/',calendarRoutes);
+app.use('/api/events',CalendarRoutes);
 app.use('/', messageRoutes);
 app.use('/',timeRoute);
 
