@@ -1,16 +1,35 @@
 import express from 'express';
-import mongoose from 'mongoose';
-import cors from 'cors';
-import CalendarEvent from './CalendarModel.js';  // Importa il modello degli eventi del calendario
+import Event from './CalendarModel.js';
+import { jwtDecode } from 'jwt-decode';
+import userRoutes from './LogSign.js';
 import jwt from 'jsonwebtoken';
-import { jwtDecode } from 'jwt-decode'; 
+import cors from 'cors';
+import mongoose from 'mongoose';
+/**
+ * @typedef {Object} JwtPayload
+ * @property {string} [iss] - Issuer
+ * @property {string} [sub] - Subject
+ * @property {string} [aud] - Audience
+ * @property {number} [exp] - Expiration time
+ * @property {number} [nbf] - Not before
+ * @property {number} [iat] - Issued at
+ * @property {string} [jti] - JWT ID
+ */
 
-const calendarRoutes = express.Router();
+/**
+ * @typedef {JwtPayload} DecodedToken
+ * @property {string} [username] - Aggiungi il campo username
+ */
+
+const CalendarRoutes = express.Router();
+
 
 // Middleware
-calendarRoutes.use(cors());
-calendarRoutes.use(express.json());
+CalendarRoutes.use(cors());
+CalendarRoutes.use(express.json());
 
+
+// Connessione a MongoDB
 const mongoUri = 'mongodb+srv://selfie:selfie@cluster0.0jvaz.mongodb.net/?retryWrites=true&w=majority&appName=Cluster0';
 mongoose.connect(mongoUri, {
 })
@@ -21,48 +40,102 @@ mongoose.connect(mongoUri, {
     console.error('Failed to connect to MongoDB', err);
   });
 
-  calendarRoutes.post('/events', async (req, res) => {
-    try {
-      const event = new Event(req.body);
-      await event.save();
-      res.status(201).send(event);
-    } catch (error) {
-      res.status(400).send(error);
-    }
-  });
-  
-  calendarRoutes.get('/events', async (req, res) => {
-    try {
-      const events = await Event.find({});
-      res.send(events);
-    } catch (error) {
-      res.status(500).send(error);
-    }
-  });
-  
-  calendarRoutes.patch('/events/:id', async (req, res) => {
-    try {
-      const event = await Event.findByIdAndUpdate(req.params.id, req.body, { new: true, runValidators: true });
-      if (!event) {
-        return res.status(404).send();
-      }
-      res.send(event);
-    } catch (error) {
-      res.status(400).send(error);
-    }
-  });
-  
-  calendarRoutes.delete('/events/:id', async (req, res) => {
-    try {
-      const event = await Event.findByIdAndDelete(req.params.id);
-      if (!event) {
-        return res.status(404).send();
-      }
-      res.send(event);
-    } catch (error) {
-      res.status(500).send(error);
-    }
-  });
-  
 
-export default calendarRoutes;
+// Middleware per verificare il token JWT
+const verifyToken = (req, res, next) => {
+  const token = req.headers['authorization']?.split(' ')[1];
+
+  if (!token) {
+    return res.status(403).send('Token mancante');
+  }
+
+  jwt.verify(token, 'tuasecretkey', (err, decoded) => {
+    if (err) {
+      return res.status(401).send('Token non valido');
+    }
+
+    // Salva il userId decodificato nella richiesta per uso successivo
+    req.userId = decoded.userId;
+    next();
+  });
+};
+
+
+// GET /api/events - Recupera eventi per l'utente autenticato
+CalendarRoutes.get('/', verifyToken, async (req, res) => {
+  const token = req.headers['authorization']?.split(' ')[1];
+
+  if (!token) {
+    return res.status(401).send("Token non trovato");
+  }
+
+  // Decodifica il token per ottenere lo username
+  let username;
+  try {
+    const decodedToken = jwtDecode(token);
+    username = decodedToken.username; 
+  } catch (error) {
+    return res.status(400).send("Errore nella decodifica del token");
+  }
+
+  try {
+    const events = await Event.find({
+      $or: [
+        { userId: req.userId }, // L'utente può vedere le proprie note
+        { accessType: 'public' }, // Le note pubbliche possono essere viste da tutti
+        { 
+          accessType: 'limited', 
+          limitedUsers: { $in: [username] } // L'utente può vedere le note limitate se è nella lista
+        }
+      ] 
+    });
+    res.status(200).json(events);
+  } catch (error) {
+    console.error('Error fetching events:', error);
+    res.status(500).json({ message: 'Failed to fetch events' });
+  }
+});
+
+// POST /api/events - Crea un evento per l'utente autenticato
+CalendarRoutes.post('/', verifyToken, async (req, res) => {
+  const { title, start, end, notificationLeadTime, repeatInterval } = req.body;
+
+  try {
+    if (!title || !start || !end) {
+      return res.status(400).json({ message: 'Title, start, and end are required.' });
+    }
+
+    const newEvent = new Event({
+      title,
+      start,
+      end,
+      userId: req.userId, // Associa l'evento all'utente autenticato
+      notificationLeadTime,
+      repeatInterval,
+    });
+
+    const savedEvent = await newEvent.save();
+    res.status(201).json(savedEvent);
+  } catch (error) {
+    console.error('Error creating event:', error);
+    res.status(500).json({ message: 'Failed to create event' });
+  }
+});
+
+// DELETE /api/events/:id - Elimina un evento dell'utente autenticato
+CalendarRoutes.delete('/:id', userRoutes, async (req, res) => {
+  const { id } = req.params;
+
+  try {
+    const event = await Event.findOneAndDelete({ _id: id, userId: req.userId });
+    if (!event) {
+      return res.status(404).json({ message: 'Event not found or unauthorized' });
+    }
+    res.status(200).json({ message: 'Event deleted successfully' });
+  } catch (error) {
+    console.error('Error deleting event:', error);
+    res.status(500).json({ message: 'Failed to delete event' });
+  }
+});
+
+export default CalendarRoutes;

@@ -2,11 +2,11 @@ import mongoose from 'mongoose';
 
 const eventSchema = new mongoose.Schema({
   title: { type: String, required: true },
-  description: { type: String },  // Campo facoltativo per le note
   start: { type: Date, required: true },
   end: { type: Date, required: true },
-  userId: { type: mongoose.Schema.Types.ObjectId, ref: 'User', required: true }, // Collegamento all'utente
+  userId: { type: mongoose.Schema.Types.ObjectId, ref: 'User', required: true }, // Relazione con l'utente
+  notificationLeadTime: { type: Number, default: 0 },
+  repeatInterval: { type: Number, default: 0 },
 });
 
-const calendar = mongoose.model('Event', eventSchema);
-export default calendar;
+export default mongoose.model('Event', eventSchema);
