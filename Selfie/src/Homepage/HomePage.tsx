@@ -5,7 +5,7 @@ import MessageList from "../Messages/MessageList";
 import "./HomePage.css";
 import { returnfirstNote } from "./../Note/NoteHome";
 import { Note, SortCriteria } from "./../Note/types";
-
+import CalendarHome from "../calendar/Calendar";
 function HomePage() {
   const [firstNote, setFirstNote] = useState<Note | null>(null);
   const [loading, setLoading] = useState(true);
@@ -40,10 +40,15 @@ function HomePage() {
         <div className="homecard">
           <div className="cardtitle">Calendario</div>
           <div className="card-body">
+          <button
+            className="button-card bottom"
+            onClick={() => navigate("/CalendarHome")}
+          >
+            Vai a Calendario
+          </button>
             <p></p>
           </div>
         </div>
-
         <div className="homecard">
           <div className="cardtitle">Note</div>
           <div className="card-body">
