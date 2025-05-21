@@ -6,14 +6,15 @@ import noteRoutes from './src/backend/NoteController.js';
 import CalendarRoutes from './src/backend/CalendarController.js';
 import messageRoutes from './src/backend/MessageController.js'
 import timeRoute from './src/backend/TimeMachineController.js'
-
+import dotenv from 'dotenv';
+dotenv.config();
 const app = express();
 const port = 8000; // Porta per il server Express
 
 
 // URI MongoDB 
-const mongoUri = 'mongodb+srv://selfie:selfie@cluster0.0jvaz.mongodb.net/?retryWrites=true&w=majority&appName=Cluster0';
-
+// const mongoUri = 'mongodb+srv://selfie:selfie@cluster0.0jvaz.mongodb.net/?retryWrites=true&w=majority&appName=Cluster0';
+const mongoUri = process.env.MONGO_URI;
 const mongo = new MongoClient(mongoUri);
 
 mongo.connect()

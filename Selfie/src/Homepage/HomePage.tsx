@@ -40,12 +40,12 @@ function HomePage() {
         <div className="homecard">
           <div className="cardtitle">Calendario</div>
           <div className="card-body">
-          <button
-            className="button-card bottom"
-            onClick={() => navigate("/CalendarHome")}
-          >
-            Vai a Calendario
-          </button>
+            <button
+              className="button-card bottom"
+              onClick={() => navigate("/CalendarHome")}
+            >
+              Vai a Calendario
+            </button>
             <p></p>
           </div>
         </div>
@@ -82,7 +82,15 @@ function HomePage() {
 
         <div className="homecard">
           <div className="cardtitle">Pomodoro</div>
-          <div className="card-body"></div>
+          <div className="card-body">
+            <button
+              className="button-card bottom"
+              onClick={() => navigate("/Pomodoro")}
+            >
+              Vai a Pomodoro
+            </button>
+            <p></p>
+          </div>
         </div>
       </div>
     </div>

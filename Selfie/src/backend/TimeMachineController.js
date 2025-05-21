@@ -3,6 +3,8 @@ import express from 'express';
 import cors from 'cors'
 import mongoose from 'mongoose';
 import TimeMachineInterface from '../TimeMachine/TimeMachineInterface.js';
+import dotenv from 'dotenv';
+dotenv.config();
 
 const timeRoute = express.Router();
 // Middleware
@@ -11,7 +13,7 @@ timeRoute.use(express.json());
 timeRoute.use(express.json());
 
 const timeMachine = TimeMachineInterface; // Inizializza l'istanza della Time Machine
-const mongoUri = 'mongodb+srv://selfie:selfie@cluster0.0jvaz.mongodb.net/?retryWrites=true&w=majority&appName=Cluster0';
+const mongoUri = process.env.MONGO_URI;
 mongoose.connect(mongoUri, {})
     .then(() => {
     console.log('Connected to MongoDB, note');

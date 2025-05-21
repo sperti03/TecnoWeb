@@ -5,6 +5,8 @@ import userRoutes from './LogSign.js';
 import jwt from 'jsonwebtoken';
 import cors from 'cors';
 import mongoose from 'mongoose';
+import dotenv from 'dotenv';
+dotenv.config();
 /**
  * @typedef {Object} JwtPayload
  * @property {string} [iss] - Issuer
@@ -30,7 +32,7 @@ CalendarRoutes.use(express.json());
 
 
 // Connessione a MongoDB
-const mongoUri = 'mongodb+srv://selfie:selfie@cluster0.0jvaz.mongodb.net/?retryWrites=true&w=majority&appName=Cluster0';
+const mongoUri = process.env.MONGO_URI;
 mongoose.connect(mongoUri, {
 })
   .then(() => {

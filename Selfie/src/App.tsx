@@ -12,6 +12,7 @@ import HomePage from "./Homepage/HomePage";
 import NoteHome from "./Note/NoteHome";
 import TimeMachineComponent from "./TimeMachine/TimeMachine";
 import CalendarHome from "./calendar/Calendar";
+import Pomodoro from "./Pomodoro/pomodoro";
 
 function Layout() {
   const location = useLocation();
@@ -25,6 +26,7 @@ function Layout() {
         <Route path="/Homepage" element={<HomePage />} />
         <Route path="/Note" element={<NoteHome />} />
         <Route path="/CalendarHome" element={<CalendarHome />} />
+        <Route path="/Pomodoro" element={<Pomodoro />} />
       </Routes>
     </>
   );

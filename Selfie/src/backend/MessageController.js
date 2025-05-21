@@ -5,7 +5,8 @@ import jwt from 'jsonwebtoken';
 import cors from 'cors';
 import {jwtDecode } from "jwt-decode"; // Importa jwt-decode e JwtPayload
 import User from './UserModel.js';
-
+import dotenv from 'dotenv';
+dotenv.config();
 
 const messageRoutes = express.Router();
 
@@ -15,7 +16,7 @@ messageRoutes.use(cors());
 messageRoutes.use(express.json());
 
 // Connessione a MongoDB
-const mongoUri = 'mongodb+srv://selfie:selfie@cluster0.0jvaz.mongodb.net/?retryWrites=true&w=majority&appName=Cluster0';
+const mongoUri = process.env.MONGO_URI;
 mongoose.connect(mongoUri, {
 })
   .then(() => {
