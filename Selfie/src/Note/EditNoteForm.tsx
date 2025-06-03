@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from "react";
 import { Note } from "./types";
+import "./notestyle.css";
 
 interface NoteFormProps {
   note?: Note;
@@ -33,7 +34,7 @@ const NoteForm: React.FC<NoteFormProps> = ({ note, onSave }) => {
   };
 
   return (
-    <form onSubmit={handleSubmit}>
+    <form onSubmit={handleSubmit} className="notes-edit-form">
       <input
         type="text"
         placeholder="Titolo"

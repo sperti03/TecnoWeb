@@ -1,0 +1,171 @@
+/* Contenitore principale */
+.notes-container {
+  max-width: 700px;
+  margin: 2rem auto;
+  background: #fffbe9;
+  border-radius: 18px;
+  box-shadow: 0 4px 24px rgba(0,0,0,0.08);
+  padding: 2rem 2.5rem;
+}
+
+/* Titolo principale */
+.notes-container h1 {
+  text-align: center;
+  color: #422800;
+  margin-bottom: 2rem;
+  font-size: 2.2rem;
+  font-weight: bold;
+}
+
+/* Form di aggiunta/modifica */
+.notes-form,
+.notes-edit-form {
+  display: flex;
+  flex-direction: column;
+  gap: 1.2rem;
+  margin-bottom: 2rem;
+}
+
+.notes-form input,
+.notes-edit-form input,
+.notes-form textarea,
+.notes-edit-form textarea {
+  font-size: 1.1rem;
+  padding: 0.7rem 1rem;
+  border: 1.5px solid #e0c97f;
+  border-radius: 8px;
+  background: #fff;
+  color: #422800;
+  transition: border 0.2s;
+  resize: none;
+}
+
+.notes-form input:focus,
+.notes-edit-form input:focus,
+.notes-form textarea:focus,
+.notes-edit-form textarea:focus {
+  border: 1.5px solid #f7c66d;
+  outline: none;
+}
+
+.notes-form button,
+.notes-edit-form button {
+  background: #f7c66d;
+  color: #422800;
+  font-weight: bold;
+  border: none;
+  border-radius: 8px;
+  padding: 0.8rem 1.2rem;
+  font-size: 1.1rem;
+  cursor: pointer;
+  transition: background 0.2s;
+  margin-top: 0.5rem;
+}
+
+.notes-form button:hover,
+.notes-edit-form button:hover {
+  background: #ffd580;
+}
+
+/* Lista delle note */
+.notes-list {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+}
+
+.notes-list li {
+  background: #fff;
+  border: 1px solid #f7c66d;
+  border-radius: 10px;
+  margin-bottom: 1.2rem;
+  padding: 1.2rem;
+  box-shadow: 0 2px 8px rgba(247,198,109,0.07);
+  position: relative;
+}
+
+.notes-list h3 {
+  margin: 0 0 0.5rem 0;
+  color: #422800;
+  font-size: 1.3rem;
+}
+
+.notes-list small {
+  color: #bfa76f;
+  display: block;
+  margin-bottom: 0.7rem;
+}
+
+.notes-list button {
+  background: #fffbe9;
+  color: #422800;
+  border: 1px solid #f7c66d;
+  border-radius: 6px;
+  padding: 0.4rem 0.9rem;
+  margin-right: 0.7rem;
+  font-size: 1rem;
+  cursor: pointer;
+  transition: background 0.2s;
+}
+
+.notes-list button:hover {
+  background: #f7c66d;
+}
+
+/* Select e label */
+.notes-form label,
+.notes-edit-form label {
+  color: #422800;
+  font-weight: 500;
+  margin-bottom: 0.2rem;
+}
+
+.notes-form select {
+  border-radius: 8px;
+  border: 1.5px solid #e0c97f;
+  padding: 0.5rem 1rem;
+  font-size: 1rem;
+  background: #fff;
+  color: #422800;
+  margin-bottom: 0.5rem;
+}
+
+/* Utenti limitati */
+.notes-form ul {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+  margin: 0.5rem 0 0 0;
+  padding: 0;
+  list-style: none;
+}
+
+.notes-form ul li {
+  background: #ffd580;
+  color: #422800;
+  border-radius: 6px;
+  padding: 0.2rem 0.7rem;
+  font-size: 0.95rem;
+}
+
+/* Ordinamento */
+.notes-sort {
+  margin: 1.5rem 0 1rem 0;
+  display: flex;
+  align-items: center;
+  gap: 0.7rem;
+}
+
+.notes-sort label {
+  color: #422800;
+  font-weight: 500;
+}
+
+.notes-sort select {
+  border-radius: 8px;
+  border: 1.5px solid #e0c97f;
+  padding: 0.4rem 1rem;
+  font-size: 1rem;
+  background: #fff;
+  color: #422800;
+}

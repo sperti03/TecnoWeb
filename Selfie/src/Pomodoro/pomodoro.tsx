@@ -12,7 +12,7 @@ export default function Pomodoro() {
   const [timeLeft, setTimeLeft] = useState(0);
   const intervalRef = useRef<NodeJS.Timeout | null>(null);
   const styleSheetRef = useRef<HTMLStyleElement | null>(null);
-
+  const [iceKey, setIceKey] = useState(0);
   useEffect(() => {
     if (phase === "idle" || phase === "end") return;
 
@@ -83,7 +83,9 @@ export default function Pomodoro() {
 
     return () => clearInterval(intervalRef.current!);
   }, [phase]);
-
+  useEffect(() => {
+    setIceKey((k) => k + 1);
+  }, [phase]);
   const handlePhaseSwitch = () => {
     if (phase === "study") {
       setPhase("break");
@@ -114,6 +116,7 @@ export default function Pomodoro() {
   return (
     <div id="pomodoro">
       <h1>pomodoro popsicle</h1>
+
       {phase === "idle" && (
         <form onSubmit={handleStart} id="studyForm">
           <div className="elenco">
@@ -169,7 +172,7 @@ export default function Pomodoro() {
 
       <div className="stick">
         <span className="stickwrite">you won a break!</span>
-        <div className="ice"></div>
+        <div className="ice" key={iceKey}></div>
       </div>
 
       <div className="bubble"></div>

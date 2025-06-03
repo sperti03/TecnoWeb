@@ -1,4 +1,6 @@
 import React, { useEffect, useState } from "react";
+import "./notestyle.css";
+
 import {
   getNotesForUser,
   addNoteForUser,
@@ -134,68 +136,64 @@ const NoteHome: React.FC = () => {
   }
 
   return (
-    <div>
+    <div className="notes-container">
       <h1>Le mie note</h1>
 
       {/* Form per aggiungere nuove note */}
-      <form onSubmit={handleAddNote}>
+      <form onSubmit={handleAddNote} className="notes-form">
+        <input
+          type="text"
+          placeholder="Titolo della nota"
+          value={newNoteTitle}
+          onChange={(e) => setNewNoteTitle(e.target.value)}
+          required
+        />
+        <textarea
+          placeholder="Contenuto della nota"
+          value={newNoteContent}
+          onChange={(e) => setNewNoteContent(e.target.value)}
+          required
+        />
         <div>
-          <input
-            type="text"
-            placeholder="Titolo della nota"
-            value={newNoteTitle}
-            onChange={(e) => setNewNoteTitle(e.target.value)}
-            required
-          />
+          <label htmlFor="newAccessType">Tipo di accesso:</label>
+          <select
+            id="newAccessType"
+            value={newAccessType}
+            onChange={(e) => setNewAccessType(e.target.value)}
+          >
+            <option value="public">Pubblica</option>
+            <option value="private">Privata</option>
+            <option value="limited">Limitata</option>
+          </select>
         </div>
-        <div>
-          <textarea
-            placeholder="Contenuto della nota"
-            value={newNoteContent}
-            onChange={(e) => setNewNoteContent(e.target.value)}
-            required
-          />
-          <div>
-            <label htmlFor="newAccessType">Tipo di accesso:</label>
-            <select
-              id="newAccessType"
-              value={newAccessType}
-              onChange={(e) => setNewAccessType(e.target.value)}
-            >
-              <option value="public">Pubblica</option>
-              <option value="private">Privata</option>
-              <option value="limited">Limitata</option>
-            </select>
-          </div>
 
-          {newAccessType === "limited" && (
-            <div>
-              <input
-                type="text"
-                placeholder="Aggiungi username"
-                onKeyDown={(e) => {
-                  if (e.key === "Enter") {
-                    e.preventDefault();
-                    const username = e.currentTarget.value.trim();
-                    if (username && !newLimitedUsers.includes(username)) {
-                      setNewLimitedUsers([...newLimitedUsers, username]);
-                    }
-                    e.currentTarget.value = "";
+        {newAccessType === "limited" && (
+          <div>
+            <input
+              type="text"
+              placeholder="Aggiungi username"
+              onKeyDown={(e) => {
+                if (e.key === "Enter") {
+                  e.preventDefault();
+                  const username = e.currentTarget.value.trim();
+                  if (username && !newLimitedUsers.includes(username)) {
+                    setNewLimitedUsers([...newLimitedUsers, username]);
                   }
-                }}
-              />
-              <ul>
-                {newLimitedUsers.map((user, index) => (
-                  <li key={index}>{user}</li>
-                ))}
-              </ul>
-            </div>
-          )}
-        </div>
+                  e.currentTarget.value = "";
+                }
+              }}
+            />
+            <ul>
+              {newLimitedUsers.map((user, index) => (
+                <li key={index}>{user}</li>
+              ))}
+            </ul>
+          </div>
+        )}
         <button type="submit">Aggiungi nota</button>
       </form>
 
-      <div>
+      <div className="notes-sort">
         <label htmlFor="sort">Ordina per:</label>
         <select
           id="sort"
@@ -208,7 +206,7 @@ const NoteHome: React.FC = () => {
         </select>
       </div>
 
-      <ul>
+      <ul className="notes-list">
         {notes.map((note) => (
           <li key={note._id}>
             <h3>{note.title}</h3>
