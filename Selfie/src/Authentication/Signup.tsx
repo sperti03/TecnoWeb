@@ -13,6 +13,7 @@ const Signup: React.FC<SignupProps> = ({ switchToLogin }) => {
   const [confirmPassword, setConfirmPassword] = useState("");
   const [birthdate, setBirthdate] = useState("");
   const [error, setError] = useState("");
+  const [profileImage, setProfileImage] = useState<File | null>(null);
 
   const navigate = useNavigate();
   const handleSubmit = async (event: React.FormEvent) => {
@@ -23,27 +24,24 @@ const Signup: React.FC<SignupProps> = ({ switchToLogin }) => {
       return;
     }
 
-    const data = {
-      username,
-      email,
-      password,
-      birthdate,
-    };
+    const formData = new FormData();
+    formData.append("username", username);
+    formData.append("email", email);
+    formData.append("password", password);
+    formData.append("birthdate", birthdate);
+    if (profileImage) {
+      formData.append("profileImage", profileImage);
+    }
 
     try {
       const response = await fetch("http://localhost:8000/api/signup", {
         method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify(data),
+        body: formData,
       });
 
       if (response.ok) {
         const responseData = await response.json();
-        const token = responseData.token; // Ottieni il token dalla risposta
-        localStorage.setItem("token", token); // Salva il token nel localStorage
-        console.log("Signup successful");
+        localStorage.setItem("token", responseData.token);
         setError("");
         navigate("/HomePage");
       } else {
@@ -113,6 +111,16 @@ const Signup: React.FC<SignupProps> = ({ switchToLogin }) => {
               onChange={(e) => setBirthdate(e.target.value)}
               required
             />
+            <div className="rows">
+              <i className="bi bi-image"></i>
+              <input
+                type="file"
+                accept="image/*"
+                onChange={(e) => {
+                  if (e.target.files) setProfileImage(e.target.files[0]);
+                }}
+              />
+            </div>
           </div>
           <div className="rows button">
             <input type="submit" value="Signup" />

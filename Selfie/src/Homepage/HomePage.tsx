@@ -6,6 +6,7 @@ import "./HomePage.css";
 import { returnfirstNote } from "./../Note/NoteHome";
 import { Note, SortCriteria } from "./../Note/types";
 import CalendarHome from "../calendar/Calendar";
+import Account from "../Account/Account";
 function HomePage() {
   const [firstNote, setFirstNote] = useState<Note | null>(null);
   const [loading, setLoading] = useState(true);
@@ -31,10 +32,8 @@ function HomePage() {
       <div className="greeting-section">
         <Hello />
       </div>
-      <div className="nav-bar">
-        <i className="bi bi-gear"></i>
-        <MessageList />
-      </div>
+      <Account />
+      <MessageList />
 
       <div className="card-container">
         <div className="homecard">

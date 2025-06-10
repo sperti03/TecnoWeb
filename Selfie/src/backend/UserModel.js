@@ -6,6 +6,10 @@ const userSchema = new mongoose.Schema({
   email: { type: String, unique: true },
   password: String,
   birthdate: Date,
+  profileImage: {
+    data: Buffer,
+    contentType: String
+  }
 });
 
 // Creiamo il modello Utente basato sullo schema

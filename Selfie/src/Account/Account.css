@@ -1,0 +1,109 @@
+.account-container {
+  position: absolute;
+  justify-self: flex-end;
+  display: inline-block;
+  left: 0;
+  margin: 10px;
+}
+
+.account-button {
+  background: none;
+  border: none;
+  cursor: pointer;
+  padding: 0;
+}
+
+.account-icon {
+  font-size: 2.5rem;
+  color: #333;
+}
+
+.account-avatar {
+  width: 42px;
+  height: 42px;
+  border-radius: 50%;
+  object-fit: cover;
+  border: 2px solid #ddd;
+}
+
+.account-menu {
+  position: absolute;
+  top: 100%;
+  left: 0; /* ← spostato a sinistra */
+  background-color: #fff;
+  border: 1px solid #ccc;
+  border-radius: 12px;
+  box-shadow: 0 8px 20px rgba(0, 0, 0, 0.15);
+  width: 240px;
+  padding: 16px;
+  z-index: 999;
+  display: flex;
+  flex-direction: column;
+  animation: fadeInSlideUp 0.25s forwards ease-out;
+}
+
+
+@keyframes fadeInSlideUp {
+  from {
+    opacity: 0;
+    transform: translateY(-10px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.account-header {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  margin-bottom: 16px;
+  border-bottom: 1px solid #eee;
+  padding-bottom: 10px;
+}
+
+.menu-avatar,
+.menu-icon {
+  width: 48px;
+  height: 48px;
+  border-radius: 50%;
+  object-fit: cover;
+  font-size: 2rem;
+  color: #666;
+}
+
+.account-username {
+  font-weight: 600;
+  font-size: 1rem;
+  color: #333;
+}
+
+.account-menu ul {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+}
+
+.account-menu li {
+  margin-bottom: 8px;
+}
+
+.account-menu button {
+  background-color: #f1f3f5;
+  color: #333;
+  border: 1px solid #ced4da;
+  padding: 10px 15px;
+  width: 100%;
+  text-align: left;
+  border-radius: 8px;
+  cursor: pointer;
+  font-size: 0.95rem;
+  transition: all 0.2s ease-in-out;
+}
+
+.account-menu button:hover {
+  background-color: #dee2e6;
+  color: #007bff;
+  border-color: #007bff;
+}
