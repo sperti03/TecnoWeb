@@ -6,6 +6,7 @@ import noteRoutes from './src/backend/NoteController.js';
 import CalendarRoutes from './src/backend/CalendarController.js';
 import messageRoutes from './src/backend/MessageController.js'
 import timeRoute from './src/backend/TimeMachineController.js'
+
 import dotenv from 'dotenv';
 dotenv.config();
 const app = express();
@@ -35,6 +36,7 @@ app.use('/',noteRoutes);
 app.use('/api/events',CalendarRoutes);
 app.use('/', messageRoutes);
 app.use('/',timeRoute);
+
 
 app.listen(port,'0.0.0.0', () => {
   console.log(`Server is running on port ${port}`);

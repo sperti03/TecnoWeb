@@ -1,6 +1,7 @@
 import { useNavigate } from "react-router-dom";
 import "./LogSign.css";
 import { useState } from "react";
+import { Resend } from "resend";
 
 interface SignupProps {
   switchToLogin: () => void;

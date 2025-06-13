@@ -7,6 +7,15 @@ import dotenv from 'dotenv';
 dotenv.config();
 import multer from 'multer';
 import fs from 'fs';
+import nodemailer from "nodemailer";
+
+const transporter = nodemailer.createTransport({
+  service: "gmail",
+  auth: {
+  user: process.env.GMAIL_USER,
+  pass: process.env.GMAIL_PASS,
+},
+});
 
 const upload = multer({ dest: 'uploads/' }); // cartella temporanea per salvare i file
 
@@ -58,51 +67,63 @@ const authenticateToken = (req, res, next) => {
 
 // Signup route
 userRoutes.post('/api/signup', upload.single('profileImage'), async (req, res) => {
-
   const { username, email, password, birthdate } = req.body;
 
-try {
-  const existingUser = await User.findOne({ $or: [{ username }, { email }] });
-  if (existingUser) {
-    return res.status(400).json({ message: 'Utente o email già in uso' });
+  try {
+    const existingUser = await User.findOne({ $or: [{ username }, { email }] });
+    if (existingUser) {
+      return res.status(400).json({ message: 'Utente o email già in uso' });
+    }
+
+    let profileImage = null;
+    if (req.file) {
+      profileImage = {
+        data: fs.readFileSync(req.file.path),
+        contentType: req.file.mimetype
+      };
+      // Elimina il file temporaneo dopo averlo letto
+      fs.unlinkSync(req.file.path);
+    }
+
+    const newUser = new User({
+      username,
+      email,
+      password,
+      birthdate,
+      profileImage
+    });
+
+    await newUser.save();
+
+    const token = jwt.sign(
+      {
+        userId: newUser._id,
+        username: newUser.username,
+        email: newUser.email,
+        birthdate: newUser.birthdate
+      },
+      process.env.JWT_SECRET || 'tuasecretkey',
+      { expiresIn: '1h' }
+    );
+
+    res.status(201).json({ token, message: 'Registrazione avvenuta con successo!' });
+
+    // Invia mail async, senza await così non blocca
+    transporter.sendMail({
+      from: '"Selfie" <noreply.selfieapp@gmail.com>',
+      to: email,
+      subject: "Benvenuto in Selfie!",
+      text: `Ciao ${username}, grazie per esserti registrato su Selfie!`,
+    }).catch(error => {
+      console.error("Errore invio mail:", error);
+    });
+
+  } catch (error) {
+    console.error("Errore creazione utente:", error);
+    res.status(500).json({ message: 'Errore durante la creazione dell\'utente' });
   }
-
-  let profileImage = null;
-  if (req.file) {
-    profileImage = {
-      data: fs.readFileSync(req.file.path),
-      contentType: req.file.mimetype
-    };
-  }
-
-  const newUser = new User({
-    username,
-    email,
-    password,
-    birthdate,
-    profileImage
-  });
-
-  await newUser.save();
-
-  const token = jwt.sign(
-    {
-      userId: newUser._id,
-      username: newUser.username,
-      email: newUser.email,
-      birthdate: newUser.birthdate
-    },
-    process.env.JWT_SECRET || 'tuasecretkey',
-    { expiresIn: '1h' }
-  );
-
-  res.status(201).json({ token, message: 'Registrazione avvenuta con successo!' });
-} catch (error) {
-  console.error("Errore creazione utente:", error);
-  res.status(500).json({ message: 'Errore durante la creazione dell\'utente' });
-}
-
 });
+
 
 
 // Login route
