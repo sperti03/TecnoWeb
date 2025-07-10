@@ -2,6 +2,11 @@ import { useNavigate } from "react-router-dom";
 import "./LogSign.css";
 import { useState } from "react";
 import { Resend } from "resend";
+import { jwtDecode, JwtPayload } from "jwt-decode";
+
+interface DecodedToken extends JwtPayload {
+  userId?: string;
+}
 
 interface SignupProps {
   switchToLogin: () => void;
@@ -43,6 +48,14 @@ const Signup: React.FC<SignupProps> = ({ switchToLogin }) => {
       if (response.ok) {
         const responseData = await response.json();
         localStorage.setItem("token", responseData.token);
+        try {
+          const decoded = jwtDecode<DecodedToken>(responseData.token);
+          if (decoded && decoded.userId) {
+            localStorage.setItem("userId", decoded.userId);
+          }
+        } catch (e) {
+          console.error("Errore nella decodifica del token per userId", e);
+        }
         setError("");
         navigate("/HomePage");
       } else {

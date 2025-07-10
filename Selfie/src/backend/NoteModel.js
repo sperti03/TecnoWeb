@@ -1,14 +1,19 @@
 import mongoose from 'mongoose';
 
+const todoItemSchema = new mongoose.Schema({
+  text: { type: String, required: true },
+  checked: { type: Boolean, default: false },
+  deadline: { type: String }, // ISO date string opzionale
+}, { _id: false });
 
 const noteSchema = new mongoose.Schema({
   title: {
     type: String,
-    required: true, // Rendi il titolo obbligatorio
+    required: true,
   },
   content: {
     type: String,
-    required: true, // Rendi il contenuto obbligatorio
+    required: true,
   },
   createdAt: {
     type: Date,
@@ -21,12 +26,16 @@ const noteSchema = new mongoose.Schema({
   },
   accessType: {
     type: String,
-    enum: ['public', 'private', 'limited'], // Definisci i tipi di accesso consentiti
-    default: 'public', // Imposta 'public' come predefinito
+    enum: ['public', 'private', 'limited'],
+    default: 'public',
   },
-  limitedUsers: {
+  accessList: {
     type: [String], // Array di username per gli accessi limitati
-    default: [], // Imposta come array vuoto di default
+    default: [],
+  },
+  todos: {
+    type: [todoItemSchema],
+    default: [],
   },
 });
 

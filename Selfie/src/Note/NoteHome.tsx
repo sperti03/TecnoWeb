@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useState, useRef } from "react";
 import "./notestyle.css";
 
 import {
@@ -6,57 +6,128 @@ import {
   addNoteForUser,
   updateNoteForUser,
   deleteNoteForUser,
-} from "./NoteService"; // Importa la funzione per aggiungere note
+  getUsers,
+} from "./NoteService"; // Funzioni note
+
 import NoteForm from "./EditNoteForm";
-import { SortCriteria, Note } from "./types";
+import { SortCriteria, Note, TodoItem } from "./types";
 import { marked } from "marked";
+import { jwtDecode, JwtPayload } from "jwt-decode";
+import { MdEdit, MdDelete } from "react-icons/md";
+
+type User = {
+  _id: string;
+  username: string;
+};
 
 const NoteHome: React.FC = () => {
-  //per caricamento e ordinamento
+  // Stati
   const [notes, setNotes] = useState<Note[]>([]);
+  const [users, setUsers] = useState<User[]>([]);
   const [sortCriteria, setSortCriteria] = useState<SortCriteria>("date");
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
-  const [sortedNotes, setSortedNotes] = useState<Note[]>([]);
 
-  //per la add
   const [newNoteTitle, setNewNoteTitle] = useState("");
   const [newNoteContent, setNewNoteContent] = useState("");
-  const [newAccessType, setNewAccessType] = useState("public"); // Aggiungi stato per il tipo di accesso
-  const [newLimitedUsers, setNewLimitedUsers] = useState<string[]>([]); // Aggiungi stato per la lista limitata
+  const [newAccessType, setNewAccessType] = useState("public");
+  const [newLimitedUsers, setNewLimitedUsers] = useState<string[]>([]);
+  const [newTodos, setNewTodos] = useState<TodoItem[]>([]);
+  const [todoText, setTodoText] = useState("");
+  const [todoDeadline, setTodoDeadline] = useState("");
 
-  //per la modifica
   const [currentNote, setCurrentNote] = useState<Note | null>(null);
   const [isEditFormVisible, setEditFormVisible] = useState(false);
+  const [userSuggestions, setUserSuggestions] = useState<string[]>([]);
+  const [userSearch, setUserSearch] = useState("");
+  const [isAddModalOpen, setAddModalOpen] = useState(false);
+  const addModalRef = useRef<HTMLDivElement>(null);
 
+  // Caricamento note e utenti all'inizio
   useEffect(() => {
-    const fetchNotes = async () => {
+    const fetchData = async () => {
       try {
         setLoading(true);
-        const fetchedNotes = await getNotesForUser("");
+        const [fetchedNotes, fetchedUsers]: [Note[], User[]] =
+          await Promise.all([getNotesForUser(""), getUsers()]);
         setNotes(fetchedNotes);
+        setUsers(fetchedUsers);
+        setUserSuggestions(fetchedUsers.map((u: User) => u.username));
       } catch (err) {
-        setError("Errore nel recupero delle note");
+        setError("Errore nel recupero delle note o utenti");
         console.error(err);
       } finally {
         setLoading(false);
       }
     };
 
-    fetchNotes();
+    fetchData();
   }, []);
 
-  //modifica nota
+  // Chiudi la modal cliccando fuori
+  useEffect(() => {
+    function handleClickOutside(event: MouseEvent) {
+      if (
+        isAddModalOpen &&
+        addModalRef.current &&
+        !addModalRef.current.contains(event.target as Node)
+      ) {
+        setAddModalOpen(false);
+      }
+    }
+    document.addEventListener("mousedown", handleClickOutside);
+    return () => document.removeEventListener("mousedown", handleClickOutside);
+  }, [isAddModalOpen]);
+
+  // Gestione blocco scroll quando la modal è aperta
+  useEffect(() => {
+    if (isAddModalOpen || isEditFormVisible) {
+      document.body.classList.add("modal-open");
+    } else {
+      document.body.classList.remove("modal-open");
+    }
+    return () => {
+      document.body.classList.remove("modal-open");
+    };
+  }, [isAddModalOpen, isEditFormVisible]);
+
+  // Mappa userId -> username
+  const userMap = React.useMemo(() => {
+    const map: { [key: string]: string } = {};
+    users.forEach((user) => {
+      map[user._id] = user.username;
+    });
+    return map;
+  }, [users]);
+
+  // Funzioni gestione note
+
   const handleUpdateNote = async (
     noteId: string | null,
     title: string,
-    content: string
+    content: string,
+    accessType: "public" | "private" | "limited",
+    accessList: string[],
+    todos: TodoItem[]
   ) => {
+    let safeAccessList = accessList;
+    if (accessType === "limited") {
+      if (username && !safeAccessList.includes(username)) {
+        safeAccessList = [...safeAccessList, username];
+      }
+    }
     try {
-      const updatedNote = await updateNoteForUser(noteId, title, content);
-      setNotes(notes.map((note) => (note._id === noteId ? updatedNote : note))); // Aggiorna lo stato con la nota aggiornata
-      setCurrentNote(null); // Resetta la nota corrente
-      setEditFormVisible(false); // Nasconde il form di modifica
+      const updatedNote = await updateNoteForUser(
+        noteId,
+        title,
+        content,
+        accessType,
+        safeAccessList,
+        todos
+      );
+      setNotes(notes.map((note) => (note._id === noteId ? updatedNote : note)));
+      setCurrentNote(null);
+      setEditFormVisible(false);
     } catch (error) {
       console.error("Errore nell'aggiornamento della nota:", error);
     }
@@ -67,7 +138,6 @@ const NoteHome: React.FC = () => {
     setEditFormVisible(true);
   };
 
-  // Aggiunta nota
   const handleAddNote = async (event: React.FormEvent) => {
     event.preventDefault();
 
@@ -76,19 +146,30 @@ const NoteHome: React.FC = () => {
       return;
     }
 
+    let accessList = newLimitedUsers;
+    if (newAccessType === "limited") {
+      // aggiungi lo username dell'autore se non già presente
+      if (username && !accessList.includes(username)) {
+        accessList = [...accessList, username];
+      }
+    }
+
     try {
       const newNote = await addNoteForUser(
         newNoteTitle,
         newNoteContent,
         newAccessType,
-        newLimitedUsers
-      ); // Includi gli altri parametri
+        accessList,
+        newTodos
+      );
       setNotes([...notes, newNote]);
       setNewNoteTitle("");
       setNewNoteContent("");
       setNewAccessType("public");
       setNewLimitedUsers([]);
+      setNewTodos([]);
       setError(null);
+      setAddModalOpen(false); // Chiudi la modal dopo l'aggiunta
     } catch (err) {
       setError("Errore durante l'aggiunta della nota");
       console.error(err);
@@ -127,6 +208,45 @@ const NoteHome: React.FC = () => {
     setNotes(sortedNotes);
   };
 
+  const handleAddTodo = () => {
+    if (todoText.trim() !== "") {
+      setNewTodos([
+        ...newTodos,
+        { text: todoText, checked: false, deadline: todoDeadline || undefined },
+      ]);
+      setTodoText("");
+      setTodoDeadline("");
+    }
+  };
+
+  const handleToggleTodo = (idx: number) => {
+    setNewTodos(
+      newTodos.map((todo, i) =>
+        i === idx ? { ...todo, checked: !todo.checked } : todo
+      )
+    );
+  };
+
+  const handleDeleteTodo = (idx: number) => {
+    setNewTodos(newTodos.filter((_, i) => i !== idx));
+  };
+
+  // Funzione per togglare il completamento di un to-do in una nota
+  const handleToggleTodoInNote = async (note: Note, todoIdx: number) => {
+    if (!note.todos) return;
+    const updatedTodos = note.todos.map((todo, idx) =>
+      idx === todoIdx ? { ...todo, checked: !todo.checked } : todo
+    );
+    await handleUpdateNote(
+      note._id,
+      note.title,
+      note.content,
+      note.accessType,
+      note.accessList,
+      updatedTodos
+    );
+  };
+
   if (loading) {
     return <div>Caricamento in corso...</div>;
   }
@@ -135,63 +255,184 @@ const NoteHome: React.FC = () => {
     return <div>{error}</div>;
   }
 
+  // Estrai userId e username dal token JWT
+  let userId = localStorage.getItem("userId") ?? "";
+  let username = "";
+  const token = localStorage.getItem("token");
+  if (token) {
+    try {
+      const decoded = jwtDecode(token) as JwtPayload & { username?: string };
+      if (decoded && typeof decoded === "object" && decoded.username) {
+        username = decoded.username;
+      }
+    } catch (e) {
+      // ignore
+    }
+  }
+
+  // Rimuovo i log di debug
+  // console.log('userId:', userId, 'username:', username);
+  // notes.forEach(note => {
+  //   console.log('note', note._id, 'userId', note.userId, 'accessType', note.accessType);
+  // });
+
+  // Filtro note accessibili all'utente loggato
+  const accessibleNotes = notes.filter((note) => {
+    if (note.userId?.toString() === userId?.toString()) return true; // autore vede sempre le sue note
+    if (note.accessType === "public") return true;
+    if (note.accessType === "limited")
+      return note.accessList.includes(username);
+    return false;
+  });
+
   return (
     <div className="notes-container">
       <h1>Le mie note</h1>
 
-      {/* Form per aggiungere nuove note */}
-      <form onSubmit={handleAddNote} className="notes-form">
-        <input
-          type="text"
-          placeholder="Titolo della nota"
-          value={newNoteTitle}
-          onChange={(e) => setNewNoteTitle(e.target.value)}
-          required
-        />
-        <textarea
-          placeholder="Contenuto della nota"
-          value={newNoteContent}
-          onChange={(e) => setNewNoteContent(e.target.value)}
-          required
-        />
-        <div>
-          <label htmlFor="newAccessType">Tipo di accesso:</label>
-          <select
-            id="newAccessType"
-            value={newAccessType}
-            onChange={(e) => setNewAccessType(e.target.value)}
-          >
-            <option value="public">Pubblica</option>
-            <option value="private">Privata</option>
-            <option value="limited">Limitata</option>
-          </select>
-        </div>
-
-        {newAccessType === "limited" && (
-          <div>
-            <input
-              type="text"
-              placeholder="Aggiungi username"
-              onKeyDown={(e) => {
-                if (e.key === "Enter") {
-                  e.preventDefault();
-                  const username = e.currentTarget.value.trim();
-                  if (username && !newLimitedUsers.includes(username)) {
-                    setNewLimitedUsers([...newLimitedUsers, username]);
-                  }
-                  e.currentTarget.value = "";
-                }
-              }}
-            />
-            <ul>
-              {newLimitedUsers.map((user, index) => (
-                <li key={index}>{user}</li>
-              ))}
-            </ul>
+      {/* Pulsante per aprire la modal */}
+      <button className="add-note-btn" onClick={() => setAddModalOpen(true)}>
+        + Nuova Nota
+      </button>
+      {/* Modal per aggiunta nota */}
+      {isAddModalOpen && (
+        <div className="modal-overlay">
+          <div className="modal-content" ref={addModalRef}>
+            <button
+              className="modal-close"
+              onClick={() => setAddModalOpen(false)}
+            >
+              &times;
+            </button>
+            <form onSubmit={handleAddNote} className="notes-form">
+              <input
+                type="text"
+                placeholder="Titolo della nota"
+                value={newNoteTitle}
+                onChange={(e) => setNewNoteTitle(e.target.value)}
+                required
+              />
+              <textarea
+                placeholder="Contenuto della nota"
+                value={newNoteContent}
+                onChange={(e) => setNewNoteContent(e.target.value)}
+                required
+              />
+              <div>
+                <label htmlFor="newAccessType">Tipo di accesso:</label>
+                <select
+                  id="newAccessType"
+                  value={newAccessType}
+                  onChange={(e) => setNewAccessType(e.target.value)}
+                >
+                  <option value="public">Pubblica</option>
+                  <option value="private">Privata</option>
+                  <option value="limited">Limitata</option>
+                </select>
+              </div>
+              {newAccessType === "limited" && (
+                <div style={{ position: "relative" }}>
+                  <input
+                    type="text"
+                    placeholder="Aggiungi username"
+                    value={userSearch}
+                    onChange={(e) => {
+                      setUserSearch(e.target.value);
+                    }}
+                    onFocus={() => setUserSearch("")}
+                    autoComplete="off"
+                  />
+                  {userSearch && (
+                    <ul
+                      style={{
+                        position: "absolute",
+                        background: "#fff",
+                        border: "1px solid #ccc",
+                        zIndex: 10,
+                        width: "100%",
+                        maxHeight: 120,
+                        overflowY: "auto",
+                        listStyle: "none",
+                        margin: 0,
+                        padding: 0,
+                      }}
+                    >
+                      {userSuggestions
+                        .filter(
+                          (u) =>
+                            u
+                              .toLowerCase()
+                              .includes(userSearch.toLowerCase()) &&
+                            !newLimitedUsers.includes(u)
+                        )
+                        .slice(0, 8)
+                        .map((u, idx) => (
+                          <li
+                            key={idx}
+                            style={{ padding: 8, cursor: "pointer" }}
+                            onMouseDown={() => {
+                              setNewLimitedUsers([...newLimitedUsers, u]);
+                              setUserSearch("");
+                            }}
+                          >
+                            {u}
+                          </li>
+                        ))}
+                    </ul>
+                  )}
+                  <ul>
+                    {newLimitedUsers.map((user, index) => (
+                      <li key={index}>{user}</li>
+                    ))}
+                  </ul>
+                </div>
+              )}
+              <div>
+                <label>To-Do List:</label>
+                <div style={{ display: "flex", gap: 8 }}>
+                  <input
+                    type="text"
+                    placeholder="Nuovo to-do"
+                    value={todoText}
+                    onChange={(e) => setTodoText(e.target.value)}
+                  />
+                  <input
+                    type="date"
+                    value={todoDeadline}
+                    onChange={(e) => setTodoDeadline(e.target.value)}
+                  />
+                  <button type="button" onClick={handleAddTodo}>
+                    Aggiungi
+                  </button>
+                </div>
+                <ul className="todo-list">
+                  {newTodos.map((todo, idx) => (
+                    <li key={idx} className={todo.checked ? "completed" : ""}>
+                      <input
+                        type="checkbox"
+                        checked={todo.checked}
+                        onChange={() => handleToggleTodo(idx)}
+                        style={{ marginRight: 6 }}
+                      />
+                      <span>{todo.text}</span>
+                      {todo.deadline && (
+                        <small>Scadenza: {todo.deadline}</small>
+                      )}
+                      <button
+                        type="button"
+                        onClick={() => handleDeleteTodo(idx)}
+                        style={{ marginLeft: 8 }}
+                      >
+                        X
+                      </button>
+                    </li>
+                  ))}
+                </ul>
+              </div>
+              <button type="submit">Aggiungi nota</button>
+            </form>
           </div>
-        )}
-        <button type="submit">Aggiungi nota</button>
-      </form>
+        </div>
+      )}
 
       <div className="notes-sort">
         <label htmlFor="sort">Ordina per:</label>
@@ -207,21 +448,129 @@ const NoteHome: React.FC = () => {
       </div>
 
       <ul className="notes-list">
-        {notes.map((note) => (
-          <li key={note._id}>
-            <h3>{note.title}</h3>
-            <div
-              dangerouslySetInnerHTML={{ __html: marked(note.content) }}
-            ></div>
-            <small>
-              Creato il: {new Date(note.createdAt).toLocaleDateString()}
-            </small>
-            <button onClick={() => handleEditNote(note)}>Modifica</button>
-            <button onClick={() => handleDeleteNote(note._id)}>Elimina</button>
-          </li>
-        ))}
+        {accessibleNotes.map((note) => {
+          const previewTodos = note.todos ? note.todos.slice(0, 4) : [];
+          const extraTodos =
+            note.todos && note.todos.length > 4 ? note.todos.length - 4 : 0;
+          return (
+            <li key={note._id}>
+              <div className="note-meta">
+                <span className={`note-badge ${note.accessType}`}>
+                  {note.accessType === "public"
+                    ? "Pubblica"
+                    : note.accessType === "private"
+                      ? "Privata"
+                      : "Limitata"}
+                </span>
+                <div className="note-footer">
+                  <small>
+                    Creato il: {new Date(note.createdAt).toLocaleDateString()}
+                    {note.userId && (
+                      <span className="note-author">
+                        {" "}
+                        &nbsp;|&nbsp; Autore:{" "}
+                        {userMap[note.userId] || "Sconosciuto"}
+                      </span>
+                    )}
+                  </small>
+                </div>
+              </div>
+              <h3>{note.title}</h3>
+              <div
+                className="note-content-preview"
+                dangerouslySetInnerHTML={{ __html: marked(note.content) }}
+              ></div>
+              {note.todos && note.todos.length > 0 && (
+                <div className="todo-section todo-preview-row">
+                  <strong style={{ marginRight: 8 }}>To-Do:</strong>
+                  <div
+                    className="todo-pill-row"
+                    style={{
+                      flexDirection: "column",
+                      alignItems: "flex-start",
+                      gap: "0.4em",
+                    }}
+                  >
+                    {previewTodos.map((todo, idx) => (
+                      <label
+                        key={idx}
+                        className={`todo-pill todo-pill-preview${todo.checked ? " completed" : ""}`}
+                        style={{
+                          display: "flex",
+                          alignItems: "center",
+                          gap: 6,
+                          cursor: "pointer",
+                          padding: "0.18em 0.95em",
+                          width: "100%",
+                        }}
+                      >
+                        <input
+                          type="checkbox"
+                          checked={todo.checked}
+                          disabled={note.userId?.toString() !== userId}
+                          onChange={() =>
+                            note.userId?.toString() === userId &&
+                            handleToggleTodoInNote(note, idx)
+                          }
+                          style={{
+                            marginRight: 4,
+                            cursor:
+                              note.userId?.toString() === userId
+                                ? "pointer"
+                                : "not-allowed",
+                          }}
+                        />
+                        <span
+                          style={{
+                            textDecoration: todo.checked
+                              ? "line-through"
+                              : undefined,
+                            color: todo.checked ? "#b0b0b0" : undefined,
+                          }}
+                        >
+                          {todo.text}
+                        </span>
+                      </label>
+                    ))}
+                    {extraTodos > 0 && (
+                      <span className="todo-pill todo-extra">
+                        +{extraTodos} altro{extraTodos > 1 ? "i" : ""}
+                      </span>
+                    )}
+                  </div>
+                </div>
+              )}
+              {note.userId?.toString() === userId && (
+                <div className="note-actions note-actions-right">
+                  <button
+                    onClick={() => handleEditNote(note)}
+                    title="Modifica nota"
+                  >
+                    <MdEdit />
+                  </button>
+                  <button
+                    onClick={() => handleDeleteNote(note._id)}
+                    title="Elimina nota"
+                  >
+                    <MdDelete />
+                  </button>
+                </div>
+              )}
+            </li>
+          );
+        })}
         {isEditFormVisible && currentNote && (
-          <NoteForm note={currentNote} onSave={handleUpdateNote} />
+          <div className="modal-overlay">
+            <div className="modal-content">
+              <button
+                className="modal-close"
+                onClick={() => setEditFormVisible(false)}
+              >
+                &times;
+              </button>
+              <NoteForm note={currentNote} onSave={handleUpdateNote} />
+            </div>
+          </div>
         )}
       </ul>
     </div>

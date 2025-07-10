@@ -2,6 +2,11 @@ import "./LogSign.css";
 import React from "react";
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
+import { jwtDecode, JwtPayload } from "jwt-decode";
+
+interface DecodedToken extends JwtPayload {
+  userId?: string;
+}
 
 interface LoginProps {
   switchToSignup: () => void;
@@ -35,6 +40,14 @@ const Login: React.FC<LoginProps> = ({ switchToSignup }) => {
         const responseData = await response.json();
         const token = responseData.token; // Ottieni il token dalla risposta
         localStorage.setItem("token", token); // Salva il token nel localStorage
+        try {
+          const decoded = jwtDecode<DecodedToken>(token);
+          if (decoded && decoded.userId) {
+            localStorage.setItem("userId", decoded.userId);
+          }
+        } catch (e) {
+          console.error("Errore nella decodifica del token per userId", e);
+        }
         console.log("Login successful");
         setError("");
         navigate("/HomePage");

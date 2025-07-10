@@ -124,6 +124,30 @@ CalendarRoutes.post('/', verifyToken, async (req, res) => {
   }
 });
 
+// Rotta per aggiungere un evento dal to-do di una nota
+CalendarRoutes.post('/api/addcalendar', verifyToken, async (req, res) => {
+  const { title, description, date } = req.body;
+  if (!title || !date) {
+    return res.status(400).json({ message: 'Title e date sono obbligatori.' });
+  }
+  try {
+    const newEvent = new Event({
+      title,
+      start: new Date(date),
+      end: new Date(date),
+      userId: req.userId,
+      notificationLeadTime: 0,
+      repeatInterval: 0,
+      description: description || '',
+    });
+    const savedEvent = await newEvent.save();
+    res.status(201).json(savedEvent);
+  } catch (error) {
+    console.error('Error creating event from note todo:', error);
+    res.status(500).json({ message: 'Failed to create event from note todo' });
+  }
+});
+
 // DELETE /api/events/:id - Elimina un evento dell'utente autenticato
 CalendarRoutes.delete('/:id', userRoutes, async (req, res) => {
   const { id } = req.params;
