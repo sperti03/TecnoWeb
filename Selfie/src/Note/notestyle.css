@@ -30,6 +30,38 @@
   padding: 1.5rem 2rem;
 }
 
+/* --- Edit form più compatto --- */
+.modal-content .notes-form {
+  gap: 0.5rem;
+  padding: 0.6rem 1rem;
+  margin-bottom: 0;
+  flex: 1;
+  overflow-y: auto;
+  max-height: 100%;
+}
+
+/* --- Todo items più compatti per edit modal --- */
+.modal-content .todo-pill {
+  padding: 0.12em 0.6em;
+  margin-bottom: 0.12em;
+  font-size: 0.9rem;
+}
+
+.modal-content .todo-pill-row {
+  gap: 0.2em;
+}
+
+/* --- Label e select più compatti per edit modal --- */
+.modal-content .notes-form label {
+  font-size: 0.9rem;
+  margin-bottom: 0.3rem;
+}
+
+.modal-content .notes-form select {
+  font-size: 0.9rem;
+  padding: 0.4rem 0.6rem;
+}
+
 .notes-form input,
 .notes-edit-form input,
 .notes-form textarea,
@@ -42,6 +74,15 @@
   color: #2d2d2d;
   transition: border 0.2s;
   resize: none;
+}
+
+/* --- Input più compatti per edit modal --- */
+.modal-content .notes-form input,
+.modal-content .notes-form textarea {
+  font-size: 0.95rem;
+  padding: 0.5rem 0.7rem;
+  max-height: 150px;
+  min-height: 80px;
 }
 
 .notes-form input:focus,
@@ -65,6 +106,13 @@
   transition: background 0.2s, box-shadow 0.2s;
   margin-top: 0.5rem;
   box-shadow: 0 2px 8px rgba(76, 110, 245, 0.08);
+}
+
+/* --- Bottoni più compatti per edit modal --- */
+.modal-content .notes-form button {
+  padding: 0.5rem 0.8rem;
+  font-size: 0.9rem;
+  margin-top: 0.2rem;
 }
 
 .notes-form button:hover,
@@ -388,6 +436,7 @@
   align-items: center;
   justify-content: center;
   animation: fadeIn 0.2s;
+  padding: 1rem;
 }
 @keyframes fadeIn {
   from { opacity: 0; }
@@ -398,14 +447,17 @@
   border-radius: 18px;
   box-shadow: 0 8px 32px rgba(76, 110, 245, 0.18);
   border: 2.5px solid #e0e0e0;
-  padding: 2.2rem 2.5rem 2rem 2.5rem;
-  min-width: 340px;
-  max-width: 95vw;
-  max-height: 90vh;
+  padding: 1.2rem 1.4rem 1rem 1.4rem;
+  min-width: 280px;
+  max-width: 80vw;
+  max-height: 75vh;
   position: relative;
   animation: popIn 0.2s;
   box-sizing: border-box;
-  padding-right: 3.5rem;
+  padding-right: 2.2rem;
+  overflow-y: auto;
+  display: flex;
+  flex-direction: column;
 }
 @keyframes popIn {
   from { transform: scale(0.95); opacity: 0; }
@@ -430,6 +482,14 @@ body.modal-open {
   display: flex;
   align-items: center;
   justify-content: center;
+}
+
+/* --- Close button più piccolo per edit modal --- */
+.modal-content .modal-close {
+  top: 0.6rem;
+  right: 0.8rem;
+  font-size: 1.6rem;
+  padding: 0.12em 0.35em;
 }
 .modal-close:hover {
   color: #fff;
@@ -568,6 +628,13 @@ body.modal-open {
   gap: 0.4em;
   margin-left: 0;
   width: 100%;
+}
+
+/* --- Scroll area per i todo nel form di modifica --- */
+.modal-content .todo-pill-row {
+  max-height: 120px;
+  overflow-y: auto;
+  padding-right: 0.5rem;
 }
 .note-actions {
   display: flex;

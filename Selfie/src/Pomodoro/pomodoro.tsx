@@ -4,15 +4,77 @@ import breakingcat from "../assets/breaking catgif2.gif";
 import "./tomatostyle.css";
 
 export default function Pomodoro() {
-  const [studyTime, setStudyTime] = useState(1);
-  const [pauseTime, setPauseTime] = useState(1);
-  const [cycles, setCycles] = useState(1);
+  // Set Pomodoro defaults: 30 min study, 5 min break, 5 cycles
+  const [studyTime, setStudyTime] = useState(30);
+  const [pauseTime, setPauseTime] = useState(5);
+  const [cycles, setCycles] = useState(5);
   const [currentCycle, setCurrentCycle] = useState(0);
   const [phase, setPhase] = useState("idle");
   const [timeLeft, setTimeLeft] = useState(0);
   const intervalRef = useRef<NodeJS.Timeout | null>(null);
   const styleSheetRef = useRef<HTMLStyleElement | null>(null);
   const [iceKey, setIceKey] = useState(0);
+  const [totalTime, setTotalTime] = useState("");
+  const [proposals, setProposals] = useState<
+    { study: number; break: number; cycles: number }[]
+  >([]);
+  const [notification, setNotification] = useState<string>("");
+
+  // Show notification for a few seconds
+  function showNotification(msg: string) {
+    setNotification(msg);
+    setTimeout(() => setNotification(""), 3500);
+  }
+
+  // Notify on phase/cycle changes
+  useEffect(() => {
+    if (phase === "study") {
+      showNotification(
+        `Inizio sessione di studio (${currentCycle + 1}/${cycles})`
+      );
+    } else if (phase === "break") {
+      showNotification(`Pausa! (${currentCycle + 1}/${cycles})`);
+    } else if (phase === "end") {
+      showNotification("Ciclo completato!");
+    }
+  }, [phase]);
+
+  // Helper to parse total time input (e.g., '200', '3h', '2:30')
+  function parseTotalTime(input: string): number | null {
+    if (!input) return null;
+    let min = 0;
+    if (/^\d+$/.test(input)) return parseInt(input); // just minutes
+    if (/^(\d+)h$/.test(input)) return parseInt(input) * 60;
+    if (/^(\d+):(\d+)$/.test(input)) {
+      const [h, m] = input.split(":").map(Number);
+      return h * 60 + m;
+    }
+    return null;
+  }
+
+  // Generate proposals when totalTime changes
+  useEffect(() => {
+    const min = parseTotalTime(totalTime);
+    if (!min || min < 40) {
+      setProposals([]);
+      return;
+    }
+    // Proposals: try to maximize study time, keep break reasonable
+    // Try 5-10 cycles, break 5-15 min, study at least 20 min
+    const props = [];
+    for (let cycles = 5; cycles <= 10; cycles++) {
+      for (let breakMin = 5; breakMin <= 15; breakMin += 5) {
+        const studyMin = Math.floor((min - cycles * breakMin) / cycles);
+        if (studyMin >= 20 && studyMin > breakMin) {
+          props.push({ study: studyMin, break: breakMin, cycles });
+        }
+      }
+    }
+    // Sort by cycles descending, then study time descending
+    props.sort((a, b) => b.cycles - a.cycles || b.study - a.study);
+    setProposals(props.slice(0, 3)); // show up to 3 proposals
+  }, [totalTime]);
+
   useEffect(() => {
     if (phase === "idle" || phase === "end") return;
 
@@ -99,6 +161,69 @@ export default function Pomodoro() {
     }
   };
 
+  // Handlers for new controls
+  function handleForceNext() {
+    if (phase === "study") {
+      setPhase("break");
+    } else if (phase === "break") {
+      if (currentCycle + 1 < cycles) {
+        setCurrentCycle((c) => c + 1);
+        setPhase("study");
+      } else {
+        setPhase("end");
+      }
+    }
+  }
+  function handleRestartCycle() {
+    // Clear existing timer
+    if (intervalRef.current) {
+      clearInterval(intervalRef.current);
+    }
+
+    // Restart the current phase without triggering phase change notifications
+    const currentPhase = phase;
+    if (currentPhase === "study") {
+      // Just reset the timer for study phase
+      setTimeLeft(studyTime * 60);
+      showNotification("Sessione di studio riavviata");
+
+      // Restart the interval
+      intervalRef.current = setInterval(() => {
+        setTimeLeft((prev) => {
+          if (prev <= 1) {
+            clearInterval(intervalRef.current!);
+            handlePhaseSwitch();
+            return 0;
+          }
+          return prev - 1;
+        });
+      }, 1000);
+    } else if (currentPhase === "break") {
+      // Just reset the timer for break phase
+      setTimeLeft(pauseTime * 60);
+      showNotification("Pausa riavviata");
+
+      // Restart the interval
+      intervalRef.current = setInterval(() => {
+        setTimeLeft((prev) => {
+          if (prev <= 1) {
+            clearInterval(intervalRef.current!);
+            handlePhaseSwitch();
+            return 0;
+          }
+          return prev - 1;
+        });
+      }, 1000);
+    }
+  }
+  function handleEndCycle() {
+    if (intervalRef.current) {
+      clearInterval(intervalRef.current);
+    }
+    setPhase("end");
+    showNotification("Sessione terminata");
+  }
+
   const handleStart = (e: React.FormEvent) => {
     e.preventDefault();
     setCurrentCycle(0);
@@ -115,90 +240,128 @@ export default function Pomodoro() {
 
   return (
     <div id="pomodoro">
-      <h1>pomodoro popsicle</h1>
-
-      {phase === "idle" && (
-        <form onSubmit={handleStart} id="studyForm">
-          <div className="elenco">
-            <label>Study Time:</label>
-            <input
-              type="number"
-              value={studyTime}
-              onChange={(e) => setStudyTime(parseInt(e.target.value))}
-              min="1"
-              required
-            />
-            <label>Break Time:</label>
-            <input
-              type="number"
-              value={pauseTime}
-              onChange={(e) => setPauseTime(parseInt(e.target.value))}
-              min="1"
-              required
-            />
-            <label>Sessions:</label>
-            <input
-              type="number"
-              value={cycles}
-              onChange={(e) => setCycles(parseInt(e.target.value))}
-              min="1"
-              required
-            />
-          </div>
-          <div className="startbutton">
-            <button type="submit">Start Studying</button>
-          </div>
-        </form>
+      {notification && (
+        <div className="notification-message">{notification}</div>
       )}
-
-      <div id="clock">
-        <div id="textOnClock">
-          {phase === "study" && "STUDY"}
-          {phase === "break" && "BREAK"}
-          {phase === "end" && "The End"}
-          {phase === "idle" && "get started"}
-        </div>
-        {phase !== "idle" && phase !== "end" && (
-          <div className="timer" id="timerDisplay">
-            {formatTime(timeLeft)}
+      <div className="pomodoro-card">
+        <h1>Pomodoro Timer</h1>
+        {phase === "idle" && (
+          <form onSubmit={handleStart} id="studyForm">
+            <div className="elenco">
+              <label>Total available time (min, 3h, 2:30):</label>
+              <input
+                type="text"
+                value={totalTime}
+                onChange={(e) => setTotalTime(e.target.value)}
+                placeholder="200, 3h, 2:30..."
+                className={proposals.length ? "with-proposals" : ""}
+              />
+              {proposals.length > 0 && (
+                <div className="proposals-container">
+                  <div className="proposals-title">Proposals:</div>
+                  {proposals.map((p, i) => (
+                    <button
+                      type="button"
+                      key={i}
+                      className="proposal-button"
+                      onClick={() => {
+                        setStudyTime(p.study);
+                        setPauseTime(p.break);
+                        setCycles(p.cycles);
+                      }}
+                    >
+                      {p.cycles}x{p.study}+{p.break}
+                    </button>
+                  ))}
+                </div>
+              )}
+              <label>Study Time (minutes):</label>
+              <input
+                type="number"
+                value={studyTime}
+                onChange={(e) => setStudyTime(parseInt(e.target.value))}
+                min="1"
+                required
+                placeholder="30"
+              />
+              <label>Break Time (minutes):</label>
+              <input
+                type="number"
+                value={pauseTime}
+                onChange={(e) => setPauseTime(parseInt(e.target.value))}
+                min="1"
+                required
+                placeholder="5"
+              />
+              <label>Sessions:</label>
+              <input
+                type="number"
+                value={cycles}
+                onChange={(e) => setCycles(parseInt(e.target.value))}
+                min="1"
+                required
+                placeholder="5"
+              />
+            </div>
+            <div className="startbutton">
+              <button type="submit">Start</button>
+            </div>
+          </form>
+        )}
+        {/* Timer/info at top, not overlapping ice cream */}
+        {phase !== "idle" && (
+          <div className="timer-container">
+            <div id="clock">
+              <div id="textOnClock">
+                {phase === "study" && "STUDY"}
+                {phase === "break" && "BREAK"}
+                {phase === "end" && "The End"}
+              </div>
+              {phase !== "idle" && phase !== "end" && (
+                <div className="timer" id="timerDisplay">
+                  {formatTime(timeLeft)}
+                </div>
+              )}
+              {phase !== "idle" && phase !== "end" && (
+                <div id="cycleCounter">
+                  Session: {currentCycle + 1}/{cycles}
+                </div>
+              )}
+            </div>
           </div>
         )}
-        {phase !== "idle" && phase !== "end" && (
-          <div id="cycleCounter">
-            Session: {currentCycle + 1}/{cycles}
+        {/* Ice cream and bubble centered, bubble behind ice cream */}
+        {(phase === "study" || phase === "break") && (
+          <div className="ice-cream-container">
+            <div className="bubble"></div>
+            <div className="ice-stick-container">
+              <div className="ice" key={iceKey}></div>
+              <div className="stick">
+                <span className="stickwrite">Pausa!</span>
+              </div>
+            </div>
           </div>
         )}
-      </div>
-
-      <div className="stick">
-        <span className="stickwrite">you won a break!</span>
-        <div className="ice" key={iceKey}></div>
-      </div>
-
-      <div className="bubble"></div>
-
-      <div
-        className="catimages"
-        style={{ display: phase === "study" ? "flex" : "none" }}
-      >
-        <img
-          className="image"
-          src={studyingcat}
-          style={{ transform: "scaleX(-1)" }}
-        />
-        <img className="image" src={studyingcat} />
-      </div>
-
-      <div
-        className="catimages"
-        style={{ display: phase === "break" ? "flex" : "none" }}
-      >
-        <img
-          className="image"
-          src={breakingcat}
-          style={{ transform: "scaleX(-1)" }}
-        />
-        <img className="image" src={breakingcat} />
+        {/* Controls for active phase */}
+        {(phase === "study" || phase === "break") && (
+          <div className="control-buttons">
+            <button
+              type="button"
+              onClick={handleForceNext}
+              className="control-button advance"
+            ></button>
+            <button
+              type="button"
+              onClick={handleRestartCycle}
+              className="control-button restart"
+            ></button>
+            <button
+              type="button"
+              onClick={handleEndCycle}
+              className="control-button end"
+            ></button>
+          </div>
+        )}
       </div>
     </div>
   );
