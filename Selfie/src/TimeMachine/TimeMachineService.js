@@ -1,7 +1,7 @@
 
 
 export const getTime = async () => {
-  const response = await fetch('http://localhost:8000/api/gettime');
+  const response = await fetch('http://localhost:3000/api/gettime');
   if (!response.ok) {
     throw new Error('Errore nel recupero del tempo corrente');
   }
@@ -10,7 +10,7 @@ export const getTime = async () => {
 };
 
 export const setTime = async (time) => {
-  const response = await fetch('http://localhost:8000/api/settime', {
+  const response = await fetch('http://localhost:3000/api/settime', {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify({ time: time.toISOString() })
@@ -23,7 +23,7 @@ export const setTime = async (time) => {
 };
 
 export const resetTime = async () => {
-  const response = await fetch(`${'http://localhost:8000/api/time'}/reset`, {
+  const response = await fetch(`${'http://localhost:3000/api/time'}/reset`, {
     method: 'POST'
   });
   if (!response.ok) {
@@ -34,7 +34,7 @@ export const resetTime = async () => {
 };
 
 export const advanceTime = async (milliseconds) => {
-  const response = await fetch(`${'http://localhost:8000/api/time'}/advance`, {
+  const response = await fetch(`${'http://localhost:3000/api/time'}/advance`, {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify({ milliseconds })

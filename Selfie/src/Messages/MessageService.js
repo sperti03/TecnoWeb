@@ -5,7 +5,7 @@ export const SendMessageToUser = async (content,dest) => {
       throw new Error('Token non trovato');
     }
   
-    const response = await fetch('http://localhost:8000/api/sendmessage', {
+    const response = await fetch('http://localhost:3000/api/sendmessage', {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
@@ -27,7 +27,7 @@ export const SendMessageToUser = async (content,dest) => {
   export const getMessagesForUser = async (userId) => {
     const token = localStorage.getItem('token'); 
   
-    const response = await fetch(`http://localhost:8000/api/getmessages?destId=${userId}`, {
+    const response = await fetch(`http://localhost:3000/api/getmessages?destId=${userId}`, {
       method: 'GET',
       headers: {
         'Content-Type': 'application/json',

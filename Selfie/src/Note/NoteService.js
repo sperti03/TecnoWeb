@@ -4,7 +4,7 @@
 // Funzione per aggiungere un evento al calendario per un to-do con scadenza
 export const addCalendarEventForTodo = async (todo, noteId) => {
   const token = localStorage.getItem('token');
-  await fetch('http://localhost:8000/api/addcalendar', {
+  await fetch('http://localhost:3000/api/addcalendar', {
     method: 'POST',
     headers: {
       'Content-Type': 'application/json',
@@ -30,7 +30,7 @@ export const addNoteForUser = async (title, content, accessType, accessList, tod
   if (accessType === 'limited' && username && !accessList.includes(username)) {
     safeAccessList = [...accessList, username];
   }
-  const response = await fetch('http://localhost:8000/api/addnote', {
+  const response = await fetch('http://localhost:3000/api/addnote', {
     method: 'POST',
     headers: {
       'Content-Type': 'application/json',
@@ -72,7 +72,7 @@ export const updateNoteForUser = async (noteId, title, content, accessType, acce
   if (accessType === 'limited' && username && !accessList.includes(username)) {
     safeAccessList = [...accessList, username];
   }
-  const response = await fetch(`http://localhost:8000/api/updatenote/${noteId}`,{
+  const response = await fetch(`http://localhost:3000/api/updatenote/${noteId}`,{
     method:'PUT',
     headers: {
       'Content-Type': 'application/json',
@@ -102,7 +102,7 @@ export const updateNoteForUser = async (noteId, title, content, accessType, acce
 export const deleteNoteForUser = async (noteId) => {
   const token = localStorage.getItem('token');
 
-  const response = await fetch(`http://localhost:8000/api/deletenote/${noteId}`, {
+  const response = await fetch(`http://localhost:3000/api/deletenote/${noteId}`, {
     method: 'DELETE',
     headers: {
       'Content-Type': 'application/json',
@@ -120,7 +120,7 @@ export const deleteNoteForUser = async (noteId) => {
 export const getNotesForUser = async (userId) => {
   const token = localStorage.getItem('token'); 
 
-  const response = await fetch(`http://localhost:8000/api/getnotes?userId=${userId}`, {
+  const response = await fetch(`http://localhost:3000/api/getnotes?userId=${userId}`, {
     method: 'GET',
     headers: {
       'Content-Type': 'application/json',
@@ -141,7 +141,7 @@ export const getNotesForUser = async (userId) => {
 export const getUsers = async () => {
   const token = localStorage.getItem("token");
 
-  const response = await fetch("http://localhost:8000/api/users", {
+  const response = await fetch("http://localhost:3000/api/users", {
     method: "GET",
     headers: {
       "Content-Type": "application/json",

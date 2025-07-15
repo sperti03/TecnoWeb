@@ -2,6 +2,10 @@ import React, { useEffect, useRef, useState } from "react";
 import studyingcat from "../assets/studying catgif.gif";
 import breakingcat from "../assets/breaking catgif2.gif";
 import "./tomatostyle.css";
+import { StudyCycleService } from "../StudyCycle/StudyCycleService";
+import { InvitationService } from "../StudyCycle/InvitationService";
+import { useSearchParams, useNavigate, useLocation } from "react-router-dom";
+import InvitationModal from "./InvitationModal";
 
 export default function Pomodoro() {
   // Set Pomodoro defaults: 30 min study, 5 min break, 5 cycles
@@ -19,6 +23,16 @@ export default function Pomodoro() {
     { study: number; break: number; cycles: number }[]
   >([]);
   const [notification, setNotification] = useState<string>("");
+  const [currentStudyCycleId, setCurrentStudyCycleId] = useState<string | null>(
+    null
+  );
+  const [studyCycleTitle, setStudyCycleTitle] = useState<string>("");
+  const [searchParams] = useSearchParams();
+  const [showInvitationModal, setShowInvitationModal] = useState(false);
+  const [sharedSession, setSharedSession] = useState<any>(null);
+  const [sessionParticipants, setSessionParticipants] = useState<any[]>([]);
+  const navigate = useNavigate();
+  const location = useLocation();
 
   // Show notification for a few seconds
   function showNotification(msg: string) {
@@ -155,8 +169,57 @@ export default function Pomodoro() {
       if (currentCycle + 1 < cycles) {
         setCurrentCycle((c) => c + 1);
         setPhase("study");
+        // Update study cycle progress if applicable
+        updateStudyCycleProgress(currentCycle + 1, "in-progress");
       } else {
         setPhase("end");
+        // Mark study cycle as completed
+        completeStudyCycle(cycles, "completed");
+      }
+    }
+  };
+
+  const updateStudyCycleProgress = async (
+    completedCycles: number,
+    status: string
+  ) => {
+    if (currentStudyCycleId) {
+      try {
+        await StudyCycleService.updateProgress(currentStudyCycleId, {
+          completedCycles,
+          status,
+        });
+      } catch (error) {
+        console.error("Failed to update study cycle progress:", error);
+      }
+    }
+  };
+
+  const completeStudyCycle = async (
+    completedCycles: number,
+    status: string
+  ) => {
+    if (currentStudyCycleId) {
+      try {
+        const totalStudyTime = completedCycles * studyTime; // Calculate total study time
+        const result = await StudyCycleService.completeStudyCycle(
+          currentStudyCycleId,
+          {
+            completedCycles,
+            totalTime: totalStudyTime,
+          }
+        );
+
+        if (result.rescheduledCycle) {
+          showNotification(
+            `Study cycle rescheduled for ${new Date(result.rescheduledCycle.scheduledDate).toLocaleDateString()}`
+          );
+        } else {
+          showNotification("Study cycle completed successfully!");
+        }
+      } catch (error) {
+        console.error("Failed to complete study cycle:", error);
+        showNotification("Failed to save study cycle completion");
       }
     }
   };
@@ -221,6 +284,12 @@ export default function Pomodoro() {
       clearInterval(intervalRef.current);
     }
     setPhase("end");
+
+    // Mark study cycle as incomplete if ended early
+    if (currentStudyCycleId && currentCycle < cycles) {
+      completeStudyCycle(currentCycle, "incomplete");
+    }
+
     showNotification("Sessione terminata");
   }
 
@@ -238,13 +307,195 @@ export default function Pomodoro() {
     return `${m}:${s}`;
   };
 
+  // Load study cycle settings from URL parameters
+  useEffect(() => {
+    const studyCycleId = searchParams.get("studyCycleId");
+    const sessionId = searchParams.get("sessionId");
+    const invitationId = searchParams.get("invitationId");
+
+    if (studyCycleId) {
+      loadStudyCycleSettings(studyCycleId);
+    } else if (sessionId) {
+      loadSharedSessionSettings(sessionId);
+    } else if (invitationId) {
+      // Handle direct invitation acceptance
+      handleInvitationAcceptance(invitationId);
+    }
+  }, [searchParams]);
+
+  // Check for invitation study settings on component mount
+  useEffect(() => {
+    const invitationSettings = sessionStorage.getItem(
+      "invitationStudySettings"
+    );
+    if (invitationSettings) {
+      try {
+        const settings = JSON.parse(invitationSettings);
+
+        // Apply invitation settings
+        if (settings.studyTime) setStudyTime(settings.studyTime);
+        if (settings.pauseTime) setPauseTime(settings.pauseTime);
+        if (settings.cycles) setCycles(settings.cycles);
+        if (settings.title) setStudyCycleTitle(settings.title);
+
+        // Show notification about loaded settings
+        showNotification(
+          `Impostazioni caricate dall'invito: ${settings.studyTime || studyTime}min studio, ${settings.pauseTime || pauseTime}min pausa, ${settings.cycles || cycles} cicli`
+        );
+
+        // Clear the settings from session storage
+        sessionStorage.removeItem("invitationStudySettings");
+      } catch (error) {
+        console.error("Error parsing invitation settings:", error);
+      }
+    }
+  }, []);
+
+  // Handle invitation settings from navigation state
+  useEffect(() => {
+    if (location.state?.fromInvitation && location.state?.studySettings) {
+      const settings = location.state.studySettings;
+
+      // Apply invitation settings
+      if (settings.studyTime) setStudyTime(settings.studyTime);
+      if (settings.pauseTime) setPauseTime(settings.pauseTime);
+      if (settings.cycles) setCycles(settings.cycles);
+      if (settings.title) setStudyCycleTitle(settings.title);
+
+      // Show notification about loaded settings
+      showNotification(
+        `Invito accettato! Impostazioni: ${settings.studyTime || studyTime}min studio, ${settings.pauseTime || pauseTime}min pausa, ${settings.cycles || cycles} cicli`
+      );
+
+      // Clear the navigation state
+      navigate("/pomodoro", { replace: true });
+    }
+  }, [location.state, navigate]);
+
+  const loadStudyCycleSettings = async (cycleId: string) => {
+    try {
+      const studyCycles = await StudyCycleService.getStudyCycles();
+      const studyCycle = studyCycles.find(
+        (cycle: any) => cycle._id === cycleId
+      );
+
+      if (studyCycle) {
+        setStudyTime(studyCycle.studyTime);
+        setPauseTime(studyCycle.pauseTime);
+        setCycles(studyCycle.cycles);
+        setCurrentStudyCycleId(cycleId);
+        setStudyCycleTitle(studyCycle.title);
+        showNotification(`Loaded: ${studyCycle.title} - ${studyCycle.subject}`);
+      }
+    } catch (error) {
+      showNotification("Failed to load study cycle settings");
+    }
+  };
+
+  const loadSharedSessionSettings = async (sessionId: string) => {
+    try {
+      const response = await fetch(
+        `http://localhost:3000/api/sessions/${sessionId}`
+      );
+      if (response.ok) {
+        const session = await response.json();
+        setStudyTime(session.studyTime);
+        setPauseTime(session.pauseTime);
+        setCycles(session.cycles);
+        setSharedSession({
+          sessionId: sessionId,
+          participants: session.participants,
+          hostName: session.hostName,
+        });
+        showNotification(`Joined shared session with ${session.hostName}!`);
+      }
+    } catch (error) {
+      showNotification("Failed to load shared session settings");
+    }
+  };
+
+  const handleInvitationAcceptance = async (invitationId: string) => {
+    try {
+      const response = await fetch(
+        `http://localhost:3000/api/invitations/${invitationId}/accept`,
+        {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ recipientId: localStorage.getItem("userId") }),
+        }
+      );
+
+      if (response.ok) {
+        const invitation = await response.json();
+        setStudyTime(invitation.studyTime);
+        setPauseTime(invitation.pauseTime);
+        setCycles(invitation.cycles);
+        setSharedSession({
+          sessionId: invitation.sessionId,
+          participants: invitation.participants,
+          hostName: invitation.senderName,
+        });
+        showNotification(`Joined study session with ${invitation.senderName}!`);
+      }
+    } catch (error) {
+      showNotification("Failed to accept invitation");
+    }
+  };
+
+  const handleSaveToCalendar = async () => {
+    try {
+      const today = new Date();
+      const tomorrow = new Date(today);
+      tomorrow.setDate(tomorrow.getDate() + 1);
+      tomorrow.setHours(14, 0, 0, 0); // Default to 2 PM tomorrow
+
+      const studyCycleData = {
+        title: `Study Session`,
+        subject: `Focus Session`,
+        studyTime: studyTime,
+        pauseTime: pauseTime,
+        cycles: cycles,
+        scheduledDate: tomorrow.toISOString().split("T")[0],
+        scheduledTime: "14:00",
+      };
+
+      const result = await StudyCycleService.createStudyCycle(studyCycleData);
+      showNotification(`Study session scheduled! Redirecting to calendar...`);
+
+      // Navigate to calendar after a brief delay
+      setTimeout(() => {
+        navigate("/CalendarHome");
+      }, 2000);
+    } catch (error) {
+      console.error("Failed to save to calendar:", error);
+      showNotification("Failed to save to calendar");
+    }
+  };
+
   return (
     <div id="pomodoro">
       {notification && (
         <div className="notification-message">{notification}</div>
       )}
       <div className="pomodoro-card">
-        <h1>Pomodoro Timer</h1>
+        <div className="header-section">
+          <h1>
+            {studyCycleTitle
+              ? `${studyCycleTitle} - Pomodoro Timer`
+              : "Pomodoro Timer"}
+          </h1>
+          {sharedSession && (
+            <div className="shared-session-indicator">
+              <div className="session-badge">
+                <span className="session-icon">👥</span>
+                <span>Shared Session with {sharedSession.hostName}</span>
+                <span className="participant-count">
+                  ({sharedSession.participants?.length || 0} participants)
+                </span>
+              </div>
+            </div>
+          )}
+        </div>
         {phase === "idle" && (
           <form onSubmit={handleStart} id="studyForm">
             <div className="elenco">
@@ -302,6 +553,22 @@ export default function Pomodoro() {
                 required
                 placeholder="5"
               />
+            </div>
+            <div className="feature-buttons">
+              <button
+                type="button"
+                className="feature-button invite-button"
+                onClick={() => setShowInvitationModal(true)}
+              >
+                👥 Invite Friends
+              </button>
+              <button
+                type="button"
+                className="feature-button calendar-button"
+                onClick={handleSaveToCalendar}
+              >
+                📅 Save to Calendar
+              </button>
             </div>
             <div className="startbutton">
               <button type="submit">Start</button>
@@ -363,6 +630,19 @@ export default function Pomodoro() {
           </div>
         )}
       </div>
+
+      {/* Invitation Modal */}
+      {showInvitationModal && (
+        <InvitationModal
+          isOpen={showInvitationModal}
+          onClose={() => setShowInvitationModal(false)}
+          studySettings={{
+            studyTime,
+            pauseTime,
+            cycles,
+          }}
+        />
+      )}
     </div>
   );
 }

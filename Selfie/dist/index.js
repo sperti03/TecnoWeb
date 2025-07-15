@@ -6,11 +6,14 @@ import noteRoutes from './src/backend/NoteController.js';
 import CalendarRoutes from './src/backend/CalendarController.js';
 import messageRoutes from './src/backend/MessageController.js'
 import timeRoute from './src/backend/TimeMachineController.js'
+import studyCycleRoutes from './src/backend/StudyCycleController.js'
+import invitationRoutes from './src/backend/InvitationController.js'
+import sessionRoutes from './src/backend/SessionController.js'
 
 import dotenv from 'dotenv';
 dotenv.config();
 const app = express();
-const port = 8000; // Porta per il server Express
+const port = 3000; // Porta per il server Express
 
 
 // URI MongoDB 
@@ -36,6 +39,9 @@ app.use('/',noteRoutes);
 app.use('/api/events',CalendarRoutes);
 app.use('/', messageRoutes);
 app.use('/',timeRoute);
+app.use('/api/study-cycles', studyCycleRoutes);
+app.use('/api/invitations', invitationRoutes);
+app.use('/api/sessions', sessionRoutes);
 
 
 app.listen(port,'0.0.0.0', () => {

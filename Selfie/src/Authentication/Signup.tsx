@@ -40,7 +40,7 @@ const Signup: React.FC<SignupProps> = ({ switchToLogin }) => {
     }
 
     try {
-      const response = await fetch("http://localhost:8000/api/signup", {
+      const response = await fetch("http://localhost:3000/api/signup", {
         method: "POST",
         body: formData,
       });

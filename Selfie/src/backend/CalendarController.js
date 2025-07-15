@@ -100,7 +100,7 @@ CalendarRoutes.get('/', verifyToken, async (req, res) => {
 
 // POST /api/events - Crea un evento per l'utente autenticato
 CalendarRoutes.post('/', verifyToken, async (req, res) => {
-  const { title, start, end, notificationLeadTime, repeatInterval } = req.body;
+  const { title, start, end, notificationLeadTime, repeatInterval, eventType, studyCycleId } = req.body;
 
   try {
     if (!title || !start || !end) {
@@ -111,9 +111,11 @@ CalendarRoutes.post('/', verifyToken, async (req, res) => {
       title,
       start,
       end,
-      userId: req.userId, // Associa l'evento all'utente autenticato
+      userId: req.userId,
       notificationLeadTime,
       repeatInterval,
+      eventType: eventType || 'general',
+      studyCycleId: studyCycleId || undefined
     });
 
     const savedEvent = await newEvent.save();

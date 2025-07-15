@@ -5,13 +5,37 @@ import MessageList from "../Messages/MessageList";
 import { returnfirstNote } from "../Note/NoteHome";
 import { Note, SortCriteria } from "../Note/types";
 import Account from "../Account/Account";
+import NotificationButton from "../components/NotificationButton/NotificationButton";
 import "./HomePage.css";
 import { v4 as uuidv4 } from "uuid";
 import Carousel from "react-spring-3d-carousel";
 import { config } from "react-spring";
 import { useDrag } from "@use-gesture/react";
 import { FaCalendarAlt, FaStickyNote, FaRegClock } from "react-icons/fa";
-function HomePage() {
+
+interface Invitation {
+  _id: string;
+  senderId: {
+    username: string;
+    email: string;
+  };
+  studySettings: any;
+  message: string;
+  status: string;
+  createdAt: string;
+}
+
+interface HomePageProps {
+  notifications?: Invitation[];
+  onAcceptInvitation?: (invitationId: string) => void;
+  onDeclineInvitation?: (invitationId: string) => void;
+}
+
+function HomePage({
+  notifications = [],
+  onAcceptInvitation = () => {},
+  onDeclineInvitation = () => {},
+}: HomePageProps) {
   const navigate = useNavigate();
   const [firstNote, setFirstNote] = useState<Note | null>(null);
   const [loading, setLoading] = useState(true);
@@ -163,15 +187,26 @@ function HomePage() {
       </div>
 
       <Account />
-      <MessageList />
-      <div className="carousel-wrapper" {...bind()}>
-        <Carousel
-          slides={cards}
-          goToSlide={goToSlide}
-          showNavigation={false}
-          offsetRadius={offsetRadius}
-          animationConfig={config.gentle}
-        />
+
+      <NotificationButton
+        notifications={notifications}
+        onAccept={onAcceptInvitation}
+        onDecline={onDeclineInvitation}
+      />
+
+      <div className="main-content-wrapper">
+        <div className="center-content">
+          <MessageList />
+          <div className="carousel-wrapper" {...bind()}>
+            <Carousel
+              slides={cards}
+              goToSlide={goToSlide}
+              showNavigation={false}
+              offsetRadius={offsetRadius}
+              animationConfig={config.gentle}
+            />
+          </div>
+        </div>
       </div>
     </div>
   );
