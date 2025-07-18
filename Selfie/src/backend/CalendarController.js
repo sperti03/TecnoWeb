@@ -6,6 +6,8 @@ import jwt from 'jsonwebtoken';
 import cors from 'cors';
 import mongoose from 'mongoose';
 import dotenv from 'dotenv';
+import nodemailer from 'nodemailer';
+import User from './UserModel.js';
 dotenv.config();
 /**
  * @typedef {Object} JwtPayload
@@ -83,11 +85,12 @@ CalendarRoutes.get('/', verifyToken, async (req, res) => {
   try {
     const events = await Event.find({
       $or: [
-        { userId: req.userId }, // L'utente può vedere le proprie note
-        { accessType: 'public' }, // Le note pubbliche possono essere viste da tutti
+        { userId: req.userId },
+        { users: { $in: [username] } }, // Mostra eventi dove l'utente è invitato
+        { accessType: 'public' },
         { 
           accessType: 'limited', 
-          limitedUsers: { $in: [username] } // L'utente può vedere le note limitate se è nella lista
+          limitedUsers: { $in: [username] }
         }
       ] 
     });
@@ -97,30 +100,97 @@ CalendarRoutes.get('/', verifyToken, async (req, res) => {
     res.status(500).json({ message: 'Failed to fetch events' });
   }
 });
+CalendarRoutes.get('/me', verifyToken, async (req, res) => {
+    try {
+        // Recupera l'utente dal database usando req.userId
+        // Oppure, se nel token hai già la mail, puoi decodificarla direttamente
+        const token = req.headers['authorization']?.split(' ')[1];
+        const decoded = jwtDecode(token);
+        // Se la mail è nel token:
+        if (decoded.email) {
+            return res.json({ email: decoded.email });
+        }
+        // Altrimenti, recupera l'utente dal database (esempio con username)
+        // const user = await User.findOne({ username: decoded.username });
+        // if (user) return res.json({ email: user.email });
+        return res.status(404).json({ error: 'Email non trovata' });
+    } catch (err) {
+        res.status(500).json({ error: 'Errore nel recupero dati utente' });
+    }
+});
+
+
+CalendarRoutes.post('/send-event-mail', async (req, res) => {
+  const { to, event } = req.body;
+  try {
+    let transporter = nodemailer.createTransport({
+      service: 'gmail',
+      auth: {
+        user: 'noreply.selfieapp@gmail.com',
+        pass: 'selfieappbygiucaefabio',
+      },
+    });
+
+    const mailText = `
+      Hai un nuovo evento in calendario!
+      Titolo: ${event.title}
+      Inizio: ${event.start}
+      Fine: ${event.end}
+      Note: ${event.description || 'Nessuna'}
+    `;
+
+    await transporter.sendMail({
+      from: '"Calendario" <tuamail@gmail.com>',
+      to,
+      subject: `Promemoria evento: ${event.title}`,
+      text: mailText,
+    });
+
+    res.json({ success: true });
+  } catch (err) {
+    res.status(500).json({ error: 'Errore invio email' });
+  }
+});
+
 
 // POST /api/events - Crea un evento per l'utente autenticato
 CalendarRoutes.post('/', verifyToken, async (req, res) => {
-  const { title, start, end, notificationLeadTime, repeatInterval } = req.body;
+  const { title, start, end, notificationLeadTime, repeatInterval, users } = req.body;
 
   try {
     if (!title || !start || !end) {
       return res.status(400).json({ message: 'Title, start, and end are required.' });
     }
 
-    const newEvent = new Event({
+    // Costruisci la lista di tutti gli utenti: creatore + invitati (evita duplicati)
+    let allUsers = Array.isArray(users) ? users.map(u => u.trim()).filter(u => u) : [];
+
+    // Ottieni l'ObjectId del creatore
+    const creatorId = req.userId;
+
+    // Trova gli ObjectId degli invitati tramite email
+    const invitedUserDocs = await User.find({ email: { $in: allUsers } });
+    const invitedUserIds = invitedUserDocs.map(u => u._id.toString());
+
+    // Unisci il creatore e gli invitati (evita duplicati)
+    let allUserIds = [creatorId, ...invitedUserIds.filter(id => id !== String(creatorId))];
+
+    // Crea un evento per ogni utente
+    const eventsToSave = allUserIds.map(userId => new Event({
       title,
       start,
       end,
-      userId: req.userId, // Associa l'evento all'utente autenticato
+      userId,
       notificationLeadTime,
       repeatInterval,
-    });
+    }));
 
-    const savedEvent = await newEvent.save();
-    res.status(201).json(savedEvent);
+    // Salva tutti gli eventi
+    const savedEvents = await Event.insertMany(eventsToSave);
+    res.status(201).json(savedEvents);
   } catch (error) {
-    console.error('Error creating event:', error);
-    res.status(500).json({ message: 'Failed to create event' });
+    console.error('Error creating events:', error);
+    res.status(500).json({ message: 'Failed to create events' });
   }
 });
 

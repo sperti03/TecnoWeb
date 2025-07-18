@@ -64,7 +64,7 @@ function HomePage() {
                 className="button-card"
                 onClick={(e) => {
                   e.stopPropagation();
-                  navigate("/CalendarHome");
+                  navigate("/calendarPage");
                 }}
               >
                 Vai a Calendario

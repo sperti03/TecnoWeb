@@ -138,6 +138,7 @@ noteRoutes.get('/api/getnotes', verifyToken, async (req, res) => {
    } catch (error) {
      return res.status(400).send("Errore nella decodifica del token");
    }
+    console.log(`Current time: ${TimeMachineInterface.getCurrentTime()}`);
 
   try {
     const notes = await Note.find({ 
