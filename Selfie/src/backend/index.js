@@ -1,0 +1,1 @@
+// File vuoto: la registrazione delle rotte progetti va fatta nell'entrypoint principale dell'app. 

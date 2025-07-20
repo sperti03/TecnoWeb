@@ -395,7 +395,7 @@ export default function Pomodoro() {
   const loadSharedSessionSettings = async (sessionId: string) => {
     try {
       const response = await fetch(
-        `http://localhost:3000/api/sessions/${sessionId}`
+        `/api/sessions/${sessionId}`
       );
       if (response.ok) {
         const session = await response.json();
@@ -417,7 +417,7 @@ export default function Pomodoro() {
   const handleInvitationAcceptance = async (invitationId: string) => {
     try {
       const response = await fetch(
-        `http://localhost:3000/api/invitations/${invitationId}/accept`,
+        `/api/invitations/${invitationId}/accept`,
         {
           method: "POST",
           headers: { "Content-Type": "application/json" },

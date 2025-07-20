@@ -11,7 +11,7 @@ import { v4 as uuidv4 } from "uuid";
 import Carousel from "react-spring-3d-carousel";
 import { config } from "react-spring";
 import { useDrag } from "@use-gesture/react";
-import { FaCalendarAlt, FaStickyNote, FaRegClock } from "react-icons/fa";
+import { FaCalendarAlt, FaStickyNote, FaRegClock, FaProjectDiagram } from "react-icons/fa";
 
 interface Invitation {
   _id: string;
@@ -42,7 +42,7 @@ function HomePage({
   const [sortCriteria, setSortCriteria] = useState<SortCriteria>("date");
   const [offsetRadius] = useState(1);
   const [goToSlide, setGoToSlide] = useState(0);
-  const totalSlides = 3;
+  const totalSlides = 4;
   const [isDragging, setIsDragging] = useState(false);
 
   useEffect(() => {
@@ -59,7 +59,7 @@ function HomePage({
     setSortCriteria(e.target.value as SortCriteria);
   };
 
-  const cards = [0, 1, 2].map((index) => {
+  const cards = [0, 1, 2, 3].map((index) => {
     const baseStyle: React.CSSProperties = {
       userSelect: "none",
       cursor: "pointer",
@@ -147,22 +147,47 @@ function HomePage({
       };
     }
 
+    if (index === 2) {
+      return {
+        key: uuidv4(),
+        content: (
+          <div className="homecard pomodoro" {...commonProps}>
+            <div className="cardtitle">
+              <FaRegClock className="icon" /> Pomodoro
+            </div>
+            <div className="card-body">
+              <button
+                className="button-card"
+                onClick={(e) => {
+                  e.stopPropagation();
+                  navigate("/Pomodoro");
+                }}
+              >
+                Vai a Pomodoro
+              </button>
+            </div>
+          </div>
+        ),
+      };
+    }
+
     return {
       key: uuidv4(),
       content: (
-        <div className="homecard pomodoro" {...commonProps}>
+        <div className="homecard progetti" {...commonProps}>
           <div className="cardtitle">
-            <FaRegClock className="icon" /> Pomodoro
+            <FaProjectDiagram className="icon" /> Progetti
           </div>
           <div className="card-body">
+            <p>Gestisci i tuoi progetti e task</p>
             <button
               className="button-card"
               onClick={(e) => {
                 e.stopPropagation();
-                navigate("/Pomodoro");
+                navigate("/Projects");
               }}
             >
-              Vai a Pomodoro
+              Vai a Progetti
             </button>
           </div>
         </div>
@@ -197,6 +222,26 @@ function HomePage({
       <div className="main-content-wrapper">
         <div className="center-content">
           <MessageList />
+          
+          <div className="section">
+            <h2>🗓️ Calendario</h2>
+            <p>Organizza i tuoi eventi e impegni</p>
+            <div className="button-group">
+              <button onClick={() => navigate('/calendar')} className="home-button calendar-button">
+                📅 Apri Calendario
+              </button>
+              <button onClick={() => navigate('/calendario-unificato')} className="home-button calendar-unified-button">
+                🔄 Calendario Unificato
+              </button>
+              <button onClick={() => navigate('/calendario-avanzato')} className="home-button calendar-advanced-button">
+                ⚡ Calendario Avanzato
+              </button>
+              <button onClick={() => navigate('/calendario-dashboard')} className="home-button calendar-dashboard-button">
+                📊 Dashboard Calendario
+              </button>
+            </div>
+          </div>
+          
           <div className="carousel-wrapper" {...bind()}>
             <Carousel
               slides={cards}

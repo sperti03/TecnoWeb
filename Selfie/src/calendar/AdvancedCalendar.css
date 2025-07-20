@@ -1,0 +1,211 @@
+/* AdvancedCalendar.css */
+
+.advanced-calendar-container {
+  padding: 20px;
+  background-color: #f5f5f5;
+  min-height: 100vh;
+}
+
+.filter-card {
+  margin-bottom: 20px;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+}
+
+.filter-controls {
+  display: flex;
+  gap: 16px;
+  flex-wrap: wrap;
+  align-items: center;
+}
+
+.filter-section {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.filter-chips {
+  display: flex;
+  gap: 8px;
+  flex-wrap: wrap;
+  margin-top: 16px;
+}
+
+.priority-chip-urgent {
+  background-color: #f44336 !important;
+  color: white !important;
+}
+
+.priority-chip-high {
+  background-color: #ff9800 !important;
+  color: white !important;
+}
+
+.priority-chip-medium {
+  background-color: #2196f3 !important;
+  color: white !important;
+}
+
+.priority-chip-low {
+  background-color: #4caf50 !important;
+  color: white !important;
+}
+
+.calendar-container {
+  background: white;
+  border-radius: 8px;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+}
+
+/* Personalizzazione eventi calendario */
+.rbc-event {
+  border-radius: 4px;
+  padding: 4px 8px;
+  font-size: 12px;
+  font-weight: 500;
+}
+
+.rbc-event.recurring-event {
+  border: 2px solid #ff9800;
+  border-left: 4px solid #ff9800;
+}
+
+.rbc-event.urgent-event {
+  box-shadow: 0 0 8px rgba(244, 67, 54, 0.6);
+  animation: pulse-urgent 2s infinite;
+}
+
+@keyframes pulse-urgent {
+  0% { box-shadow: 0 0 8px rgba(244, 67, 54, 0.6); }
+  50% { box-shadow: 0 0 16px rgba(244, 67, 54, 0.8); }
+  100% { box-shadow: 0 0 8px rgba(244, 67, 54, 0.6); }
+}
+
+.rbc-event.project-event {
+  border-left: 4px solid #9c27b0;
+}
+
+.rbc-event.study-event {
+  border-left: 4px solid #00bcd4;
+}
+
+/* Statistiche cards */
+.stats-card {
+  text-align: center;
+  transition: transform 0.2s ease;
+}
+
+.stats-card:hover {
+  transform: translateY(-2px);
+}
+
+.stats-number {
+  font-size: 2.5rem;
+  font-weight: bold;
+  margin-bottom: 8px;
+}
+
+.stats-label {
+  color: #666;
+  font-size: 0.875rem;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+/* Modal styling */
+.recurrence-modal {
+  max-width: 600px;
+}
+
+.recurrence-form {
+  padding: 20px 0;
+}
+
+.form-section {
+  margin-bottom: 24px;
+}
+
+.form-section-title {
+  font-weight: 600;
+  margin-bottom: 16px;
+  color: #333;
+  border-bottom: 2px solid #e0e0e0;
+  padding-bottom: 8px;
+}
+
+.days-of-week-selector {
+  display: flex;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+
+.day-chip {
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.day-chip.selected {
+  background-color: #2196f3 !important;
+  color: white !important;
+}
+
+/* Responsive design */
+@media (max-width: 768px) {
+  .filter-controls {
+    flex-direction: column;
+    align-items: stretch;
+  }
+  
+  .filter-section {
+    width: 100%;
+  }
+  
+  .calendar-container {
+    margin: 0 -10px;
+  }
+  
+  .rbc-calendar {
+    font-size: 12px;
+  }
+  
+  .rbc-event {
+    font-size: 10px;
+    padding: 2px 4px;
+  }
+}
+
+/* Dark mode support */
+@media (prefers-color-scheme: dark) {
+  .advanced-calendar-container {
+    background-color: #121212;
+    color: white;
+  }
+  
+  .filter-card,
+  .calendar-container {
+    background-color: #1e1e1e;
+    color: white;
+  }
+  
+  .form-section-title {
+    color: #e0e0e0;
+    border-bottom-color: #333;
+  }
+}
+
+/* Animation per il caricamento */
+.loading-container {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  height: 400px;
+}
+
+.fade-in {
+  animation: fadeIn 0.5s ease-in;
+}
+
+@keyframes fadeIn {
+  from { opacity: 0; transform: translateY(20px); }
+  to { opacity: 1; transform: translateY(0); }
+} 

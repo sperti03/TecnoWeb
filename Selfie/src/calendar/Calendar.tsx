@@ -2,12 +2,23 @@ import React, { useEffect, useState } from "react";
 import { Calendar, momentLocalizer } from "react-big-calendar";
 import moment from "moment";
 import "react-big-calendar/lib/css/react-big-calendar.css";
-import Button from "@mui/material/Button";
 import logo from "./images/logo.png";
 import { createEvents, EventAttributes } from "ics";
 import { StudyCycleService } from "../StudyCycle/StudyCycleService";
 import { useNavigate } from "react-router-dom";
 import StudyCycleModal from "./StudyCycleModal";
+import {
+  Dialog,
+  DialogTitle,
+  DialogContent,
+  DialogActions,
+  TextField,
+  Button,
+  Box,
+  Chip,
+  Typography,
+  Alert
+} from "@mui/material";
 
 const localizer = momentLocalizer(moment);
 
@@ -21,6 +32,7 @@ interface Event {
   repeatInterval: number;
   eventType?: string;
   studyCycleId?: string;
+  participants?: string[];
 }
 
 const CalendarHome: React.FC = () => {
@@ -32,6 +44,19 @@ const CalendarHome: React.FC = () => {
     start: Date;
     end: Date;
   } | null>(null);
+  
+  // Stati per modal creazione evento con partecipanti
+  const [showEventModal, setShowEventModal] = useState(false);
+  const [eventForm, setEventForm] = useState({
+    title: '',
+    description: '',
+    notificationLeadTime: 0,
+    repeatInterval: 0,
+    participantEmail: '',
+    participants: [] as string[]
+  });
+  const [eventError, setEventError] = useState<string | null>(null);
+  
   const navigate = useNavigate();
 
   useEffect(() => {
@@ -44,7 +69,7 @@ const CalendarHome: React.FC = () => {
       }
 
       try {
-        const response = await fetch("http://localhost:3000/api/events", {
+        const response = await fetch("/api/events", {
           method: "GET",
           headers: {
             "Content-Type": "application/json",
@@ -125,65 +150,129 @@ const CalendarHome: React.FC = () => {
     );
 
     if (choice === "1") {
-      createRegularEvent(start, end);
+      setSelectedSlot({ start, end });
+      setEventForm({
+        title: '',
+        description: '',
+        notificationLeadTime: 0,
+        repeatInterval: 0,
+        participantEmail: '',
+        participants: []
+      });
+      setEventError(null);
+      setShowEventModal(true);
     } else if (choice === "2") {
       setSelectedSlot({ start, end });
       setShowStudyCycleModal(true);
     }
   };
 
-  const createRegularEvent = (start: Date, end: Date) => {
-    const title = window.prompt("New Event name");
-    const notificationLeadTime = parseInt(
-      window.prompt("Minutes before event to notify?") || "0",
-      10
-    );
-    const repeatInterval = parseInt(
-      window.prompt("Notification repeat interval in minutes?") || "0",
-      10
-    );
+  // Aggiunge partecipante alla lista
+  const addParticipant = () => {
+    const email = eventForm.participantEmail.trim();
+    if (email && email.includes('@') && !eventForm.participants.includes(email)) {
+      setEventForm({
+        ...eventForm,
+        participants: [...eventForm.participants, email],
+        participantEmail: ''
+      });
+      setEventError(null);
+    } else if (!email.includes('@')) {
+      setEventError('Inserisci un indirizzo email valido');
+    } else if (eventForm.participants.includes(email)) {
+      setEventError('Questo partecipante è già stato aggiunto');
+    }
+  };
 
-    if (title) {
-      const newEvent = {
-        title,
-        start,
-        end,
-        notificationLeadTime,
-        repeatInterval,
-        eventType: "general",
-      };
+  // Rimuove partecipante dalla lista
+  const removeParticipant = (emailToRemove: string) => {
+    setEventForm({
+      ...eventForm,
+      participants: eventForm.participants.filter(email => email !== emailToRemove)
+    });
+  };
 
-      const token = localStorage.getItem("token");
-      if (!token) {
-        setError("User not authenticated");
-        return;
-      }
+  // Crea evento con partecipanti
+  const createEventWithParticipants = async () => {
+    if (!selectedSlot || !eventForm.title.trim()) {
+      setEventError('Il titolo dell\'evento è obbligatorio');
+      return;
+    }
 
-      fetch("http://localhost:3000/api/events", {
+    const token = localStorage.getItem("token");
+    if (!token) {
+      setError("User not authenticated");
+      return;
+    }
+
+    const newEvent = {
+      title: eventForm.title,
+      description: eventForm.description,
+      start: selectedSlot.start,
+      end: selectedSlot.end,
+      notificationLeadTime: eventForm.notificationLeadTime,
+      repeatInterval: eventForm.repeatInterval,
+      eventType: "general",
+      participants: eventForm.participants, // Array di email partecipanti
+    };
+
+    try {
+      const response = await fetch("/api/events", {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
           Authorization: `Bearer ${token}`,
         },
         body: JSON.stringify(newEvent),
-      })
-        .then((response) => {
-          if (!response.ok) {
-            throw new Error("Failed to create event");
-          }
-          return response.json();
-        })
-        .then((event) => {
-          setEvents([
-            ...events,
-            {
-              ...event,
-              start: new Date(event.start),
-              end: new Date(event.end),
-            },
-          ]);
-        })
-        .catch((error) => setError("Error creating event"));
+      });
+
+      if (!response.ok) {
+        throw new Error("Failed to create event");
+      }
+
+      const result = await response.json();
+      const event = result.event || result; // Compatibilità con vecchia risposta
+      
+      setEvents([
+        ...events,
+        {
+          ...event,
+          start: new Date(event.start),
+          end: new Date(event.end),
+        },
+      ]);
+
+      // Mostra informazioni sui partecipanti
+      if (result.participantsInfo) {
+        const { participantsInfo } = result;
+        let message = `✅ Evento creato con successo!\n`;
+        message += `📊 Eventi creati: ${participantsInfo.eventsCreated}\n`;
+        
+        if (participantsInfo.emailsSent > 0) {
+          message += `📧 Email inviate a: ${participantsInfo.successfulParticipants.join(', ')}\n`;
+        }
+        
+        if (participantsInfo.emailsNotFound.length > 0) {
+          message += `⚠️ Email non trovate: ${participantsInfo.emailsNotFound.join(', ')}\nQuesti utenti non sono registrati sulla piattaforma.`;
+        }
+        
+        alert(message);
+      }
+
+      // Chiudi modal e resetta form
+      setShowEventModal(false);
+      setEventForm({
+        title: '',
+        description: '',
+        notificationLeadTime: 0,
+        repeatInterval: 0,
+        participantEmail: '',
+        participants: []
+      });
+      setEventError(null);
+
+    } catch (error) {
+      setEventError("Errore durante la creazione dell'evento");
     }
   };
 
@@ -254,6 +343,119 @@ const CalendarHome: React.FC = () => {
         defaultView="month"
         views={["month", "week", "day"]}
       />
+
+      {/* Modal per creazione evento con partecipanti */}
+      <Dialog open={showEventModal} onClose={() => setShowEventModal(false)} maxWidth="md" fullWidth>
+        <DialogTitle>
+          📅 Crea Nuovo Evento
+        </DialogTitle>
+        <DialogContent>
+          <Box sx={{ display: 'flex', flexDirection: 'column', gap: 2, mt: 2 }}>
+            {eventError && (
+              <Alert severity="error">{eventError}</Alert>
+            )}
+            
+            <TextField
+              fullWidth
+              label="Titolo Evento"
+              value={eventForm.title}
+              onChange={(e) => setEventForm({...eventForm, title: e.target.value})}
+              required
+            />
+            
+            <TextField
+              fullWidth
+              label="Descrizione"
+              multiline
+              rows={2}
+              value={eventForm.description}
+              onChange={(e) => setEventForm({...eventForm, description: e.target.value})}
+            />
+            
+            <Box sx={{ display: 'flex', gap: 2 }}>
+              <TextField
+                label="Minuti preavviso notifica"
+                type="number"
+                value={eventForm.notificationLeadTime}
+                onChange={(e) => setEventForm({...eventForm, notificationLeadTime: parseInt(e.target.value) || 0})}
+                sx={{ flex: 1 }}
+              />
+              <TextField
+                label="Intervallo ripetizione (min)"
+                type="number"
+                value={eventForm.repeatInterval}
+                onChange={(e) => setEventForm({...eventForm, repeatInterval: parseInt(e.target.value) || 0})}
+                sx={{ flex: 1 }}
+              />
+            </Box>
+            
+            <Typography variant="h6" sx={{ mt: 2 }}>
+              👥 Partecipanti
+            </Typography>
+            
+            <Box sx={{ display: 'flex', gap: 1 }}>
+              <TextField
+                fullWidth
+                label="Email partecipante"
+                type="email"
+                value={eventForm.participantEmail}
+                onChange={(e) => setEventForm({...eventForm, participantEmail: e.target.value})}
+                onKeyPress={(e) => {
+                  if (e.key === 'Enter') {
+                    e.preventDefault();
+                    addParticipant();
+                  }
+                }}
+              />
+              <Button 
+                variant="outlined" 
+                onClick={addParticipant}
+                sx={{ minWidth: 'auto' }}
+              >
+                Aggiungi
+              </Button>
+            </Box>
+            
+            {eventForm.participants.length > 0 && (
+              <Box>
+                <Typography variant="body2" color="text.secondary" gutterBottom>
+                  L'evento sarà creato nel calendario di tutti i partecipanti:
+                </Typography>
+                <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 1 }}>
+                  {eventForm.participants.map((email, index) => (
+                    <Chip
+                      key={index}
+                      label={email}
+                      onDelete={() => removeParticipant(email)}
+                      color="primary"
+                      variant="outlined"
+                    />
+                  ))}
+                </Box>
+              </Box>
+            )}
+            
+            {selectedSlot && (
+              <Alert severity="info">
+                📅 Data: {selectedSlot.start.toLocaleDateString()} 
+                ⏰ Orario: {selectedSlot.start.toLocaleTimeString()} - {selectedSlot.end.toLocaleTimeString()}
+              </Alert>
+            )}
+          </Box>
+        </DialogContent>
+        <DialogActions>
+          <Button onClick={() => setShowEventModal(false)}>
+            Annulla
+          </Button>
+          <Button 
+            onClick={createEventWithParticipants}
+            variant="contained"
+            disabled={!eventForm.title.trim()}
+          >
+            Crea Evento
+          </Button>
+        </DialogActions>
+      </Dialog>
 
       {showStudyCycleModal && (
         <StudyCycleModal

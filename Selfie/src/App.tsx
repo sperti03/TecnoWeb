@@ -15,6 +15,10 @@ import NoteHome from "./Note/NoteHome";
 import TimeMachineComponent from "./TimeMachine/TimeMachine";
 import CalendarHome from "./calendar/Calendar";
 import Pomodoro from "./Pomodoro/pomodoro";
+import ProjectHome from "./Progetti/ProjectHome";
+import UnifiedCalendar from './calendar/UnifiedCalendar';
+import AdvancedCalendar from './calendar/AdvancedCalendar';
+import CalendarDashboard from './calendar/CalendarDashboard';
 import { NotificationService } from "./services/NotificationService";
 import { StudyCycleAutoService } from "./services/StudyCycleAutoService";
 
@@ -164,7 +168,14 @@ function Layout() {
         />
         <Route path="/Note" element={<NoteHome />} />
         <Route path="/CalendarHome" element={<CalendarHome />} />
+        <Route path="/calendar" element={<CalendarHome />} />
+        <Route path="/calendario-unificato" element={<UnifiedCalendar />} />
+        <Route path="/calendario-avanzato" element={<AdvancedCalendar />} />
+        <Route path="/calendario-dashboard" element={<CalendarDashboard />} />
         <Route path="/Pomodoro" element={<Pomodoro />} />
+        <Route path="/Projects" element={<ProjectHome />} />
+        <Route path="/progetti" element={<ProjectHome />} />
+        <Route path="/time-machine" element={<TimeMachineComponent />} />
       </Routes>
     </>
   );

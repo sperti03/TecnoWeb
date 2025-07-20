@@ -91,6 +91,15 @@ body {
   color: #f44336;
 }
 
+.homecard.progetti {
+  border-color: #9c27b0;
+  background: #f3e5f5;
+}
+
+.homecard.progetti .icon {
+  color: #9c27b0;
+}
+
 .card-body {
   text-align: center;
   color: #2e2e2e;
@@ -143,6 +152,124 @@ body {
   width: 100%;
 }
 
+.button-group {
+  display: flex;
+  gap: 12px;
+  margin-top: 16px;
+  flex-wrap: wrap;
+  justify-content: center;
+}
+
+.calendar-button {
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  color: white;
+  border: none;
+  padding: 12px 24px;
+  border-radius: 8px;
+  font-size: 16px;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  box-shadow: 0 4px 12px rgba(102, 126, 234, 0.3);
+}
+
+.calendar-button:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 6px 20px rgba(102, 126, 234, 0.4);
+}
+
+.calendar-unified-button {
+  background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%);
+  color: white;
+  border: none;
+  padding: 12px 24px;
+  border-radius: 8px;
+  font-size: 16px;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  box-shadow: 0 4px 12px rgba(240, 147, 251, 0.3);
+}
+
+.calendar-unified-button:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 6px 20px rgba(240, 147, 251, 0.4);
+}
+
+.calendar-advanced-button {
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  color: white;
+  border: none;
+  padding: 12px 24px;
+  border-radius: 8px;
+  font-size: 16px;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  box-shadow: 0 4px 12px rgba(102, 126, 234, 0.3);
+  position: relative;
+  overflow: hidden;
+}
+
+.calendar-advanced-button:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 6px 20px rgba(102, 126, 234, 0.4);
+}
+
+.calendar-advanced-button:before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: -100%;
+  width: 100%;
+  height: 100%;
+  background: linear-gradient(90deg, transparent, rgba(255,255,255,0.2), transparent);
+  transition: left 0.5s;
+}
+
+.calendar-advanced-button:hover:before {
+  left: 100%;
+}
+
+.calendar-dashboard-button {
+  background: linear-gradient(135deg, #4caf50 0%, #8bc34a 100%);
+  color: white;
+  border: none;
+  padding: 12px 24px;
+  border-radius: 8px;
+  font-size: 16px;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  box-shadow: 0 4px 12px rgba(76, 175, 80, 0.3);
+}
+
+.calendar-dashboard-button:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 6px 20px rgba(76, 175, 80, 0.4);
+}
+
+.section {
+  margin: 20px 0;
+  padding: 20px;
+  background: rgba(255, 255, 255, 0.1);
+  border-radius: 12px;
+  backdrop-filter: blur(10px);
+  border: 1px solid rgba(255, 255, 255, 0.2);
+  text-align: center;
+}
+
+.section h2 {
+  margin-top: 0;
+  color: #333;
+  font-size: 1.5em;
+}
+
+.section p {
+  color: #666;
+  margin-bottom: 16px;
+}
+
 /* Responsive design */
 @media (max-width: 968px) {
   .notification-toggle-container {
@@ -161,6 +288,19 @@ body {
 
   .center-content {
     width: 100%;
+  }
+  
+  .button-group {
+    flex-direction: column;
+    align-items: center;
+  }
+
+  .calendar-button,
+  .calendar-unified-button,
+  .calendar-advanced-button,
+  .calendar-dashboard-button {
+    width: 100%;
+    max-width: 280px;
   }
 }
 

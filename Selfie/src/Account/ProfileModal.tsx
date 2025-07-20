@@ -25,7 +25,7 @@ const ProfileModal: React.FC<ProfileModalProps> = ({ isOpen, onClose }) => {
   const [errorMessage, setErrorMessage] = useState("");
   const [successMessage, setSuccessMessage] = useState("");
 
-  const API_BASE_URL = "http://localhost:3000/api";
+  const API_BASE_URL = "/api";
 
   useEffect(() => {
     const token = localStorage.getItem("token");
