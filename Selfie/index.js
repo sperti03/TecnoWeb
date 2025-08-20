@@ -5,7 +5,7 @@ import userRoutes from './src/backend/LogSign.js'
 import noteRoutes from './src/backend/NoteController.js';
 import CalendarRoutes from './src/backend/CalendarController.js';
 import messageRoutes from './src/backend/MessageController.js'
-import timeRoute from './src/backend/TimeMachineController.js'
+import timeMachineRoutes from './src/backend/TimeMachineController.js'
 import studyCycleRoutes from './src/backend/StudyCycleController.js'
 import invitationRoutes from './src/backend/InvitationController.js'
 import sessionRoutes from './src/backend/SessionController.js'
@@ -37,9 +37,9 @@ app.use(express.json());
 // Routes
 app.use('/', userRoutes);
 app.use('/',noteRoutes);
-app.use('/api/events',CalendarRoutes);
+app.use('/',CalendarRoutes);  // Rimosso '/api/events' perché già incluso in CalendarController
 app.use('/', messageRoutes);
-app.use('/',timeRoute);
+app.use('/api/timemachine', timeMachineRoutes);
 app.use('/api/study-cycles', studyCycleRoutes);
 app.use('/api/invitations', invitationRoutes);
 app.use('/api/sessions', sessionRoutes);

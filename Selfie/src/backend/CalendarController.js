@@ -67,7 +67,7 @@ const verifyToken = (req, res, next) => {
 
 
 // GET /api/events - Recupera eventi per l'utente autenticato
-CalendarRoutes.get('/', verifyToken, async (req, res) => {
+CalendarRoutes.get('/api/events', verifyToken, async (req, res) => {
   const token = req.headers['authorization']?.split(' ')[1];
 
   if (!token) {
@@ -86,7 +86,21 @@ CalendarRoutes.get('/', verifyToken, async (req, res) => {
   try {
     // Con la logica semplificata, ogni utente vede solo i propri eventi
     // (che includono quelli condivisi con lui, perché sono stati creati per lui)
-    const events = await Event.find({ userId: req.userId });
+    let query = { userId: req.userId };
+    
+    // Filtra per eventi dalle note se richiesto
+    const fromNotes = req.query.fromNotes === 'true';
+    if (fromNotes) {
+      query.eventType = 'note-todo';
+    }
+    
+    // Filtra per studyCycleId se richiesto
+    const studyCycleId = req.query.studyCycleId;
+    if (studyCycleId) {
+      query.studyCycleId = studyCycleId;
+    }
+    
+    const events = await Event.find(query);
     res.status(200).json(events);
   } catch (error) {
     console.error('Error fetching events:', error);
@@ -95,22 +109,38 @@ CalendarRoutes.get('/', verifyToken, async (req, res) => {
 });
 
 // POST /api/events - Crea un evento per l'utente autenticato
-CalendarRoutes.post('/', verifyToken, async (req, res) => {
+CalendarRoutes.post('/api/events', verifyToken, async (req, res) => {
   const { 
     title, start, end, description, notificationLeadTime, repeatInterval, 
     eventType, studyCycleId, participants = [], createdByEmail = '', 
-    projectEventData, category, priority, color, location 
+    projectEventData, category, priority, color, location, studyCycleData 
   } = req.body;
 
   try {
     if (!title || !start || !end) {
+      console.log('Missing required fields:', { title: !!title, start: !!start, end: !!end });
       return res.status(400).json({ message: 'Title, start, and end are required.' });
     }
 
-    console.log('=== CREATING EVENT WITH PARTICIPANTS ===');
+    // Validate and convert dates
+    const startDate = new Date(start);
+    const endDate = new Date(end);
+    
+    if (isNaN(startDate.getTime()) || isNaN(endDate.getTime())) {
+      console.log('Invalid date format:', { start, end });
+      return res.status(400).json({ message: 'Invalid date format for start or end.' });
+    }
+
+    console.log('=== CREATING EVENT ===');
     console.log('Event title:', title);
+    console.log('Event start:', start, typeof start);
+    console.log('Event end:', end, typeof end);
+    console.log('Event type:', eventType);
+    console.log('Study cycle ID:', studyCycleId);
+    console.log('Study cycle data:', studyCycleData);
     console.log('Participants emails:', participants);
     console.log('Creator userId:', req.userId);
+    console.log('Full request body:', req.body);
 
     // Associa email a userId se esiste
     const participantsWithIds = await Promise.all(
@@ -137,13 +167,14 @@ CalendarRoutes.post('/', verifyToken, async (req, res) => {
       const newEvent = new Event({
         title,
         description: description || '',
-        start,
-        end,
+        start: startDate,
+        end: endDate,
         userId,
         notificationLeadTime: notificationLeadTime || 0,
         repeatInterval: repeatInterval || 0,
         eventType: eventType || 'general',
         studyCycleId: studyCycleId || undefined,
+        studyCycleData: studyCycleData || undefined,
         participants: participantsWithIds,
         createdByEmail,
         projectEventData: projectEventData || undefined,
@@ -226,9 +257,90 @@ CalendarRoutes.post('/', verifyToken, async (req, res) => {
   }
 });
 
+// GET /api/events/statistics - Recupera statistiche eventi per l'utente autenticato
+CalendarRoutes.get('/api/events/statistics', verifyToken, async (req, res) => {
+  try {
+    const userId = req.userId;
+    
+    // Calcola statistiche base
+    const totalEvents = await Event.countDocuments({ userId });
+    const recurringEvents = await Event.countDocuments({ userId, isRecurring: true });
+    const projectEvents = await Event.countDocuments({ userId, eventType: 'project' });
+    const studyCycleEvents = await Event.countDocuments({ userId, eventType: 'study-cycle' });
+    const noteEvents = await Event.countDocuments({ userId, eventType: 'note-todo' });
+    
+    // Eventi questo mese
+    const startOfMonth = new Date();
+    startOfMonth.setDate(1);
+    startOfMonth.setHours(0, 0, 0, 0);
+    
+    const endOfMonth = new Date(startOfMonth);
+    endOfMonth.setMonth(endOfMonth.getMonth() + 1);
+    
+    const eventsThisMonth = await Event.countDocuments({
+      userId,
+      start: { $gte: startOfMonth, $lt: endOfMonth }
+    });
+    
+    // Eventi questa settimana
+    const startOfWeek = new Date();
+    const day = startOfWeek.getDay();
+    const diff = startOfWeek.getDate() - day + (day === 0 ? -6 : 1); // Lunedì
+    startOfWeek.setDate(diff);
+    startOfWeek.setHours(0, 0, 0, 0);
+    
+    const endOfWeek = new Date(startOfWeek);
+    endOfWeek.setDate(endOfWeek.getDate() + 7);
+    
+    const eventsThisWeek = await Event.countDocuments({
+      userId,
+      start: { $gte: startOfWeek, $lt: endOfWeek }
+    });
+    
+    // Aggregazione per categoria
+    const eventsByCategory = await Event.aggregate([
+      { $match: { userId } },
+      { $group: { _id: '$category', count: { $sum: 1 } } },
+      { $sort: { count: -1 } }
+    ]);
+    
+    // Aggregazione per priorità
+    const eventsByPriority = await Event.aggregate([
+      { $match: { userId } },
+      { $group: { _id: '$priority', count: { $sum: 1 } } },
+      { $sort: { count: -1 } }
+    ]);
+    
+    // Aggregazione per tipo evento
+    const eventsByType = await Event.aggregate([
+      { $match: { userId } },
+      { $group: { _id: '$eventType', count: { $sum: 1 } } },
+      { $sort: { count: -1 } }
+    ]);
+    
+    const statistics = {
+      totalEvents,
+      recurringEvents,
+      projectEvents,
+      studyCycleEvents,
+      noteEvents,
+      eventsThisMonth,
+      eventsThisWeek,
+      eventsByCategory,
+      eventsByPriority,
+      eventsByType
+    };
+    
+    res.status(200).json(statistics);
+  } catch (error) {
+    console.error('Error fetching statistics:', error);
+    res.status(500).json({ message: 'Failed to fetch statistics' });
+  }
+});
+
 // Rotta per aggiungere un evento dal to-do di una nota
 CalendarRoutes.post('/api/addcalendar', verifyToken, async (req, res) => {
-  const { title, description, date } = req.body;
+  const { title, description, date, noteId, todoText, isFromNote } = req.body;
   if (!title || !date) {
     return res.status(400).json({ message: 'Title e date sono obbligatori.' });
   }
@@ -238,15 +350,119 @@ CalendarRoutes.post('/api/addcalendar', verifyToken, async (req, res) => {
       start: new Date(date),
       end: new Date(date),
       userId: req.userId,
-      notificationLeadTime: 0,
+      notificationLeadTime: 15, // 15 minuti di notifica per to-do
       repeatInterval: 0,
       description: description || '',
+      // Metadata for note integration
+      noteId: noteId || null,
+      todoText: todoText || null,
+      isFromNote: isFromNote || false,
+      eventType: isFromNote ? 'note-todo' : 'manual'
     });
     const savedEvent = await newEvent.save();
+    console.log(`📅 Evento creato da nota: ${title} (Note ID: ${noteId})`);
     res.status(201).json(savedEvent);
   } catch (error) {
     console.error('Error creating event from note todo:', error);
     res.status(500).json({ message: 'Failed to create event from note todo' });
+  }
+});
+
+// DELETE /api/events/from-note/:noteId - Remove all events created from a specific note
+CalendarRoutes.delete('/api/events/from-note/:noteId', verifyToken, async (req, res) => {
+  const { noteId } = req.params;
+  
+  try {
+    const result = await Event.deleteMany({ 
+      userId: req.userId, 
+      noteId: noteId,
+      isFromNote: true
+    });
+    
+    console.log(`🗑️ Rimossi ${result.deletedCount} eventi per nota ${noteId}`);
+    res.status(200).json({ 
+      message: `Removed ${result.deletedCount} events for note ${noteId}`,
+      deletedCount: result.deletedCount 
+    });
+  } catch (error) {
+    console.error('Error removing events for note:', error);
+    res.status(500).json({ message: 'Failed to remove events for note' });
+  }
+});
+
+// GET /api/events/from-notes - Get all events created from notes
+CalendarRoutes.get('/api/events/from-notes', verifyToken, async (req, res) => {
+  try {
+    const events = await Event.find({ 
+      userId: req.userId, 
+      isFromNote: true 
+    });
+    
+    res.status(200).json(events);
+  } catch (error) {
+    console.error('Error fetching events from notes:', error);
+    res.status(500).json({ message: 'Failed to fetch events from notes' });
+  }
+});
+
+// PUT /api/events/sync-note/:noteId - Sync a specific note's todos to calendar
+CalendarRoutes.put('/api/events/sync-note/:noteId', verifyToken, async (req, res) => {
+  const { noteId } = req.params;
+  const { todos, noteTitle } = req.body;
+  
+  try {
+    // Remove existing events for this note
+    const deleteResult = await Event.deleteMany({ 
+      userId: req.userId, 
+      noteId: noteId,
+      isFromNote: true
+    });
+    
+    let created = 0;
+    let errors = 0;
+    const createdEvents = [];
+    
+    // Create new events for todos with deadlines
+    if (todos && Array.isArray(todos)) {
+      for (const todo of todos) {
+        if (todo.deadline && !todo.checked) {
+          try {
+            const newEvent = new Event({
+              title: `📝 To-Do: ${todo.text}`,
+              start: new Date(todo.deadline),
+              end: new Date(todo.deadline),
+              userId: req.userId,
+              notificationLeadTime: 15,
+              repeatInterval: 0,
+              description: `Dalla nota: "${noteTitle}" (ID: ${noteId})`,
+              noteId: noteId,
+              todoText: todo.text,
+              isFromNote: true,
+              eventType: 'note-todo'
+            });
+            
+            const savedEvent = await newEvent.save();
+            createdEvents.push(savedEvent);
+            created++;
+          } catch (error) {
+            console.error('Error creating event for todo:', error);
+            errors++;
+          }
+        }
+      }
+    }
+    
+    console.log(`🔄 Sync nota ${noteId}: rimossi ${deleteResult.deletedCount}, creati ${created}`);
+    res.status(200).json({
+      message: `Synced note ${noteId}: removed ${deleteResult.deletedCount}, created ${created}`,
+      deletedCount: deleteResult.deletedCount,
+      createdCount: created,
+      errors: errors,
+      createdEvents: createdEvents
+    });
+  } catch (error) {
+    console.error('Error syncing note to calendar:', error);
+    res.status(500).json({ message: 'Failed to sync note to calendar' });
   }
 });
 
@@ -481,7 +697,17 @@ CalendarRoutes.post('/shared', verifyToken, async (req, res) => {
 
   try {
     if (!title || !start || !end) {
+      console.log('Missing required fields:', { title: !!title, start: !!start, end: !!end });
       return res.status(400).json({ message: 'Title, start, and end are required.' });
+    }
+
+    // Validate and convert dates
+    const startDate = new Date(start);
+    const endDate = new Date(end);
+    
+    if (isNaN(startDate.getTime()) || isNaN(endDate.getTime())) {
+      console.log('Invalid date format:', { start, end });
+      return res.status(400).json({ message: 'Invalid date format for start or end.' });
     }
 
     console.log('=== CREATING EVENT FOR MULTIPLE USERS ===');
@@ -508,8 +734,8 @@ CalendarRoutes.post('/shared', verifyToken, async (req, res) => {
       const newEvent = new Event({
         title,
         description: description || '',
-        start,
-        end,
+        start: startDate,
+        end: endDate,
         userId,
         notificationLeadTime: notificationLeadTime || 0,
         category: category || 'personal',

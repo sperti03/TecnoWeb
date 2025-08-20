@@ -23,6 +23,7 @@ import {
 const localizer = momentLocalizer(moment);
 
 interface Event {
+  _id?: string;
   title: string;
   start: Date;
   end: Date;
@@ -33,6 +34,29 @@ interface Event {
   eventType?: string;
   studyCycleId?: string;
   participants?: string[];
+  // Campi aggiuntivi dal backend
+  category?: string;
+  priority?: string;
+  color?: string;
+  location?: string;
+  accessType?: string;
+  sharedWith?: string[];
+  isProjectEvent?: boolean;
+  projectEventData?: {
+    projectId?: string;
+    taskId?: string;
+    type?: string;
+  };
+  isRecurring?: boolean;
+  recurrenceRule?: {
+    frequency?: string;
+    interval?: number;
+    endDate?: Date;
+    daysOfWeek?: number[];
+    maxOccurrences?: number;
+  };
+  createdAt?: Date;
+  updatedAt?: Date;
 }
 
 const CalendarHome: React.FC = () => {
@@ -57,7 +81,72 @@ const CalendarHome: React.FC = () => {
   });
   const [eventError, setEventError] = useState<string | null>(null);
   
+  // Stati per modal dettagli evento
+  const [showEventDetailsModal, setShowEventDetailsModal] = useState(false);
+  const [selectedEvent, setSelectedEvent] = useState<Event | null>(null);
+  
   const navigate = useNavigate();
+
+  // Helper functions per formattazione
+  const formatDate = (date: Date) => {
+    return date.toLocaleDateString('it-IT', {
+      weekday: 'long',
+      year: 'numeric',
+      month: 'long',
+      day: 'numeric'
+    });
+  };
+
+  const formatTime = (date: Date) => {
+    return date.toLocaleTimeString('it-IT', {
+      hour: '2-digit',
+      minute: '2-digit'
+    });
+  };
+
+  const getEventTypeLabel = (eventType?: string) => {
+    switch (eventType) {
+      case 'study-cycle': return '📚 Study Cycle';
+      case 'project': return '🚀 Progetto';
+      case 'general': return '📅 Generale';
+      default: return '📅 Evento';
+    }
+  };
+
+  const getCategoryLabel = (category?: string) => {
+    switch (category) {
+      case 'work': return '💼 Lavoro';
+      case 'personal': return '👤 Personale';
+      case 'study': return '📖 Studio';
+      case 'meeting': return '🤝 Riunione';
+      case 'reminder': return '⏰ Promemoria';
+      case 'project': return '🚀 Progetto';
+      case 'milestone': return '🎯 Milestone';
+      default: return '📋 Altro';
+    }
+  };
+
+  const getPriorityLabel = (priority?: string) => {
+    switch (priority) {
+      case 'low': return '🟢 Bassa';
+      case 'medium': return '🟡 Media';
+      case 'high': return '🟠 Alta';
+      case 'urgent': return '🔴 Urgente';
+      default: return '⚪ Non specificata';
+    }
+  };
+
+  const getRecurrenceLabel = (recurrenceRule?: Event['recurrenceRule']) => {
+    if (!recurrenceRule || recurrenceRule.frequency === 'none') return 'Nessuna';
+    
+    switch (recurrenceRule.frequency) {
+      case 'daily': return `Ogni ${recurrenceRule.interval || 1} giorno/i`;
+      case 'weekly': return `Ogni ${recurrenceRule.interval || 1} settimana/e`;
+      case 'monthly': return `Ogni ${recurrenceRule.interval || 1} mese/i`;
+      case 'yearly': return `Ogni ${recurrenceRule.interval || 1} anno/i`;
+      default: return 'Personalizzata';
+    }
+  };
 
   useEffect(() => {
     const fetchEvents = async () => {
@@ -277,10 +366,20 @@ const CalendarHome: React.FC = () => {
   };
 
   const handleEventClick = (event: Event) => {
+    // Se è un study cycle, reindirizza al Pomodoro, altrimenti mostra i dettagli
     if (event.eventType === "study-cycle" && event.studyCycleId) {
-      // Redirect to Pomodoro with study cycle settings
-      navigate(`/Pomodoro?studyCycleId=${event.studyCycleId}`);
+      const choice = window.confirm(
+        `Questo è un evento Study Cycle.\n\nVuoi:\n- OK: Aprire il Pomodoro Timer\n- Annulla: Vedere i dettagli dell'evento`
+      );
+      if (choice) {
+        navigate(`/Pomodoro?studyCycleId=${event.studyCycleId}`);
+        return;
+      }
     }
+    
+    // Mostra i dettagli dell'evento per tutti gli altri casi
+    setSelectedEvent(event);
+    setShowEventDetailsModal(true);
   };
 
   const exportToICalendar = () => {
@@ -468,6 +567,181 @@ const CalendarHome: React.FC = () => {
           }}
         />
       )}
+
+      {/* Modal per visualizzare dettagli evento */}
+      <Dialog 
+        open={showEventDetailsModal} 
+        onClose={() => setShowEventDetailsModal(false)} 
+        maxWidth="md" 
+        fullWidth
+      >
+        <DialogTitle sx={{ bgcolor: selectedEvent?.color || '#4caf50', color: 'white', pb: 1 }}>
+          <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+            <Typography variant="h6" component="span">
+              {selectedEvent?.title}
+            </Typography>
+            <Chip 
+              label={getEventTypeLabel(selectedEvent?.eventType)} 
+              size="small" 
+              sx={{ bgcolor: 'rgba(255,255,255,0.2)', color: 'white' }}
+            />
+          </Box>
+        </DialogTitle>
+        
+        <DialogContent sx={{ pt: 3 }}>
+          {selectedEvent && (
+            <Box sx={{ display: 'flex', flexDirection: 'column', gap: 3 }}>
+              
+              {/* Informazioni data e ora */}
+              <Box>
+                <Typography variant="h6" gutterBottom sx={{ color: 'primary.main', fontWeight: 'bold' }}>
+                  📅 Data e Ora
+                </Typography>
+                <Box sx={{ ml: 2 }}>
+                  <Typography><strong>Data:</strong> {formatDate(selectedEvent.start)}</Typography>
+                  <Typography><strong>Orario:</strong> {formatTime(selectedEvent.start)} - {formatTime(selectedEvent.end)}</Typography>
+                  <Typography><strong>Durata:</strong> {Math.round((selectedEvent.end.getTime() - selectedEvent.start.getTime()) / (1000 * 60))} minuti</Typography>
+                </Box>
+              </Box>
+
+              {/* Descrizione */}
+              {selectedEvent.description && (
+                <Box>
+                  <Typography variant="h6" gutterBottom sx={{ color: 'primary.main', fontWeight: 'bold' }}>
+                    📝 Descrizione
+                  </Typography>
+                  <Typography sx={{ ml: 2, p: 2, bgcolor: 'grey.100', borderRadius: 1 }}>
+                    {selectedEvent.description}
+                  </Typography>
+                </Box>
+              )}
+
+              {/* Classificazione */}
+              <Box>
+                <Typography variant="h6" gutterBottom sx={{ color: 'primary.main', fontWeight: 'bold' }}>
+                  🏷️ Classificazione
+                </Typography>
+                <Box sx={{ ml: 2, display: 'flex', flexDirection: 'column', gap: 1 }}>
+                  <Typography><strong>Categoria:</strong> {getCategoryLabel(selectedEvent.category)}</Typography>
+                  <Typography><strong>Priorità:</strong> {getPriorityLabel(selectedEvent.priority)}</Typography>
+                  {selectedEvent.location && (
+                    <Typography><strong>📍 Luogo:</strong> {selectedEvent.location}</Typography>
+                  )}
+                </Box>
+              </Box>
+
+              {/* Notifiche e Ricorrenza */}
+              <Box>
+                <Typography variant="h6" gutterBottom sx={{ color: 'primary.main', fontWeight: 'bold' }}>
+                  🔔 Notifiche e Ricorrenza
+                </Typography>
+                <Box sx={{ ml: 2, display: 'flex', flexDirection: 'column', gap: 1 }}>
+                  <Typography>
+                    <strong>Preavviso notifica:</strong> {selectedEvent.notificationLeadTime > 0 ? `${selectedEvent.notificationLeadTime} minuti` : 'Nessuno'}
+                  </Typography>
+                  <Typography>
+                    <strong>Intervallo ripetizione:</strong> {selectedEvent.repeatInterval > 0 ? `${selectedEvent.repeatInterval} minuti` : 'Nessuno'}
+                  </Typography>
+                  {selectedEvent.isRecurring && (
+                    <Typography>
+                      <strong>🔄 Ricorrenza:</strong> {getRecurrenceLabel(selectedEvent.recurrenceRule)}
+                    </Typography>
+                  )}
+                </Box>
+              </Box>
+
+              {/* Informazioni progetto */}
+              {selectedEvent.isProjectEvent && selectedEvent.projectEventData && (
+                <Box>
+                  <Typography variant="h6" gutterBottom sx={{ color: 'primary.main', fontWeight: 'bold' }}>
+                    🚀 Informazioni Progetto
+                  </Typography>
+                  <Box sx={{ ml: 2, p: 2, bgcolor: 'blue.50', borderRadius: 1 }}>
+                    <Typography><strong>Tipo:</strong> {selectedEvent.projectEventData.type}</Typography>
+                    {selectedEvent.projectEventData.projectId && (
+                      <Typography><strong>ID Progetto:</strong> {selectedEvent.projectEventData.projectId}</Typography>
+                    )}
+                    {selectedEvent.projectEventData.taskId && (
+                      <Typography><strong>ID Task:</strong> {selectedEvent.projectEventData.taskId}</Typography>
+                    )}
+                  </Box>
+                </Box>
+              )}
+
+              {/* Condivisione */}
+              {selectedEvent.accessType === 'shared' && selectedEvent.sharedWith && selectedEvent.sharedWith.length > 0 && (
+                <Box>
+                  <Typography variant="h6" gutterBottom sx={{ color: 'primary.main', fontWeight: 'bold' }}>
+                    👥 Condiviso con
+                  </Typography>
+                  <Box sx={{ ml: 2, display: 'flex', flexWrap: 'wrap', gap: 1 }}>
+                    {selectedEvent.sharedWith.map((username, index) => (
+                      <Chip key={index} label={username} color="secondary" variant="outlined" />
+                    ))}
+                  </Box>
+                </Box>
+              )}
+
+              {/* Partecipanti (vecchio sistema email) */}
+              {selectedEvent.participants && selectedEvent.participants.length > 0 && (
+                <Box>
+                  <Typography variant="h6" gutterBottom sx={{ color: 'primary.main', fontWeight: 'bold' }}>
+                    📧 Partecipanti (Email)
+                  </Typography>
+                  <Box sx={{ ml: 2, display: 'flex', flexWrap: 'wrap', gap: 1 }}>
+                    {selectedEvent.participants.map((email, index) => (
+                      <Chip key={index} label={email} color="info" variant="outlined" />
+                    ))}
+                  </Box>
+                </Box>
+              )}
+
+              {/* Metadati */}
+              <Box>
+                <Typography variant="h6" gutterBottom sx={{ color: 'primary.main', fontWeight: 'bold' }}>
+                  ℹ️ Informazioni Tecniche
+                </Typography>
+                <Box sx={{ ml: 2, display: 'flex', flexDirection: 'column', gap: 0.5 }}>
+                  {selectedEvent._id && (
+                    <Typography variant="body2" color="text.secondary">
+                      <strong>ID:</strong> {selectedEvent._id}
+                    </Typography>
+                  )}
+                  {selectedEvent.createdAt && (
+                    <Typography variant="body2" color="text.secondary">
+                      <strong>Creato:</strong> {new Date(selectedEvent.createdAt).toLocaleString('it-IT')}
+                    </Typography>
+                  )}
+                  {selectedEvent.updatedAt && (
+                    <Typography variant="body2" color="text.secondary">
+                      <strong>Modificato:</strong> {new Date(selectedEvent.updatedAt).toLocaleString('it-IT')}
+                    </Typography>
+                  )}
+                </Box>
+              </Box>
+
+            </Box>
+          )}
+        </DialogContent>
+        
+        <DialogActions>
+          <Button onClick={() => setShowEventDetailsModal(false)}>
+            Chiudi
+          </Button>
+          {selectedEvent?.eventType === 'study-cycle' && selectedEvent.studyCycleId && (
+            <Button 
+              variant="contained" 
+              color="primary"
+              onClick={() => {
+                setShowEventDetailsModal(false);
+                navigate(`/Pomodoro?studyCycleId=${selectedEvent.studyCycleId}`);
+              }}
+            >
+              🍅 Apri Pomodoro Timer
+            </Button>
+          )}
+        </DialogActions>
+      </Dialog>
     </div>
   );
 };

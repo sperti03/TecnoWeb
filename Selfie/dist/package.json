@@ -6,11 +6,11 @@
   "scripts": {
     "start": "node dist/index.js",
     "dev": "vite",
-    "build": "vite build && tsc --project tsconfig.node.json && cpx package.json dist/ && cpx index.js dist/ && npm run copy-node-modules && npm run link-node-modules",
+    "build": "vite build && cpx package.json dist/ && cpx index.js dist/ && npm run link-node-modules",
     "lint": "eslint .",
     "preview": "vite preview",
-    "copy-node-modules": "ncp ./node_modules dist/node_modules",
-    "link-node-modules": "symlink-dir dist/node_modules dist/src/backend/node_modules"
+    "copy-node-modules": "echo skipped",
+    "link-node-modules": "symlink-dir node_modules dist/src/backend/node_modules"
   },
   "dependencies": {
     "@emotion/react": "^11.13.3",

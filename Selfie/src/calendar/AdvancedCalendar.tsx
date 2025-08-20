@@ -84,6 +84,10 @@ const AdvancedCalendar: React.FC = () => {
   const [showStatsModal, setShowStatsModal] = useState(false);
   const [selectedSlot, setSelectedSlot] = useState<{start: Date; end: Date} | null>(null);
   
+  // Modal dettagli evento
+  const [showEventDetailsModal, setShowEventDetailsModal] = useState(false);
+  const [selectedEvent, setSelectedEvent] = useState<Event | null>(null);
+  
   // Form per evento ricorrente
   const [eventForm, setEventForm] = useState({
     title: '',
@@ -111,6 +115,45 @@ const AdvancedCalendar: React.FC = () => {
       'Content-Type': 'application/json',
       'Authorization': `Bearer ${token}`,
     };
+  };
+
+  // Helper functions per formattazione
+  const formatDate = (date: Date) => {
+    return date.toLocaleDateString('it-IT', {
+      weekday: 'long',
+      year: 'numeric',
+      month: 'long',
+      day: 'numeric'
+    });
+  };
+
+  const formatTime = (date: Date) => {
+    return date.toLocaleTimeString('it-IT', {
+      hour: '2-digit',
+      minute: '2-digit'
+    });
+  };
+
+  const getCategoryLabel = (category: string) => {
+    switch (category) {
+      case 'work': return '💼 Lavoro';
+      case 'personal': return '👤 Personale';
+      case 'study': return '📖 Studio';
+      case 'meeting': return '🤝 Riunione';
+      case 'reminder': return '⏰ Promemoria';
+      case 'project': return '🚀 Progetto';
+      default: return '📋 Altro';
+    }
+  };
+
+  const getPriorityLabel = (priority: string) => {
+    switch (priority) {
+      case 'low': return '🟢 Bassa';
+      case 'medium': return '🟡 Media';
+      case 'high': return '🟠 Alta';
+      case 'urgent': return '🔴 Urgente';
+      default: return '⚪ Non specificata';
+    }
   };
 
   useEffect(() => {
@@ -428,6 +471,10 @@ const AdvancedCalendar: React.FC = () => {
             style={{ height: 600 }}
             selectable
             onSelectSlot={handleSelectSlot}
+            onSelectEvent={(event) => {
+              setSelectedEvent(event);
+              setShowEventDetailsModal(true);
+            }}
             eventPropGetter={eventStyleGetter}
             defaultView="month"
             views={["month", "week", "day", "agenda"]}
@@ -784,6 +831,113 @@ const AdvancedCalendar: React.FC = () => {
         </DialogContent>
         <DialogActions>
           <Button onClick={() => setShowStatsModal(false)}>
+            Chiudi
+          </Button>
+        </DialogActions>
+      </Dialog>
+
+      {/* Modal per visualizzare dettagli evento */}
+      <Dialog 
+        open={showEventDetailsModal} 
+        onClose={() => setShowEventDetailsModal(false)} 
+        maxWidth="md" 
+        fullWidth
+      >
+        <DialogTitle sx={{ bgcolor: selectedEvent?.color || '#4caf50', color: 'white', pb: 1 }}>
+          <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+            <Typography variant="h6" component="span">
+              {selectedEvent?.title}
+            </Typography>
+            <Chip 
+              label={selectedEvent?.isRecurring ? '🔄 Ricorrente' : '📅 Singolo'} 
+              size="small" 
+              sx={{ bgcolor: 'rgba(255,255,255,0.2)', color: 'white' }}
+            />
+          </Box>
+        </DialogTitle>
+        
+        <DialogContent sx={{ pt: 3 }}>
+          {selectedEvent && (
+            <Box sx={{ display: 'flex', flexDirection: 'column', gap: 3 }}>
+              
+              {/* Informazioni data e ora */}
+              <Box>
+                <Typography variant="h6" gutterBottom sx={{ color: 'primary.main', fontWeight: 'bold' }}>
+                  📅 Data e Ora
+                </Typography>
+                <Box sx={{ ml: 2 }}>
+                  <Typography><strong>Data:</strong> {formatDate(selectedEvent.start)}</Typography>
+                  <Typography><strong>Orario:</strong> {formatTime(selectedEvent.start)} - {formatTime(selectedEvent.end)}</Typography>
+                  <Typography><strong>Durata:</strong> {Math.round((selectedEvent.end.getTime() - selectedEvent.start.getTime()) / (1000 * 60))} minuti</Typography>
+                </Box>
+              </Box>
+
+              {/* Classificazione */}
+              <Box>
+                <Typography variant="h6" gutterBottom sx={{ color: 'primary.main', fontWeight: 'bold' }}>
+                  🏷️ Classificazione
+                </Typography>
+                <Box sx={{ ml: 2, display: 'flex', flexDirection: 'column', gap: 1 }}>
+                  <Typography><strong>Categoria:</strong> {getCategoryLabel(selectedEvent.category)}</Typography>
+                  <Typography><strong>Priorità:</strong> {getPriorityLabel(selectedEvent.priority)}</Typography>
+                  {selectedEvent.location && (
+                    <Typography><strong>📍 Luogo:</strong> {selectedEvent.location}</Typography>
+                  )}
+                </Box>
+              </Box>
+
+              {/* Ricorrenza */}
+              {selectedEvent.isRecurring && (
+                <Box>
+                  <Typography variant="h6" gutterBottom sx={{ color: 'primary.main', fontWeight: 'bold' }}>
+                    🔄 Ricorrenza
+                  </Typography>
+                  <Box sx={{ ml: 2, p: 2, bgcolor: 'purple.50', borderRadius: 1 }}>
+                    <Typography><strong>Tipo:</strong> Evento ricorrente</Typography>
+                    {selectedEvent.parentEventId && (
+                      <Typography><strong>ID Evento Padre:</strong> {selectedEvent.parentEventId}</Typography>
+                    )}
+                  </Box>
+                </Box>
+              )}
+
+              {/* Stile visivo */}
+              <Box>
+                <Typography variant="h6" gutterBottom sx={{ color: 'primary.main', fontWeight: 'bold' }}>
+                  🎨 Stile Visivo
+                </Typography>
+                <Box sx={{ ml: 2, display: 'flex', alignItems: 'center', gap: 2 }}>
+                  <Box
+                    sx={{
+                      width: 40,
+                      height: 40,
+                      backgroundColor: selectedEvent.color,
+                      borderRadius: 1,
+                      border: '1px solid #ccc'
+                    }}
+                  />
+                  <Typography><strong>Colore:</strong> {selectedEvent.color}</Typography>
+                </Box>
+              </Box>
+
+              {/* Metadati */}
+              <Box>
+                <Typography variant="h6" gutterBottom sx={{ color: 'primary.main', fontWeight: 'bold' }}>
+                  ℹ️ Informazioni Tecniche
+                </Typography>
+                <Box sx={{ ml: 2, display: 'flex', flexDirection: 'column', gap: 0.5 }}>
+                  <Typography variant="body2" color="text.secondary">
+                    <strong>ID:</strong> {selectedEvent._id}
+                  </Typography>
+                </Box>
+              </Box>
+
+            </Box>
+          )}
+        </DialogContent>
+        
+        <DialogActions>
+          <Button onClick={() => setShowEventDetailsModal(false)}>
             Chiudi
           </Button>
         </DialogActions>

@@ -20,12 +20,50 @@ import TextField from '@mui/material/TextField';
 import Alert from '@mui/material/Alert';
 import FormControlLabel from '@mui/material/FormControlLabel';
 import Switch from '@mui/material/Switch';
+import Dialog from '@mui/material/Dialog';
+import DialogTitle from '@mui/material/DialogTitle';
+import DialogContent from '@mui/material/DialogContent';
+import DialogActions from '@mui/material/DialogActions';
 import logo from './images/logo.png';
-import CalendarProjectIntegration, { CalendarEvent, SyncOptions } from '../Progetti/CalendarProjectIntegration';
-import projectService from '../Progetti/ProjectService';
-import { Project } from '../Progetti/types';
+import CalendarProjectIntegration from '../Progetti/CalendarProjectIntegration.js';
+import projectService from '../Progetti/ProjectService.js';
 
 const localizer = momentLocalizer(moment);
+
+// Local interfaces (JS backend in Progetti)
+interface CalendarEvent {
+  title: string;
+  start: Date;
+  end: Date;
+  description?: string;
+  type?: 'event' | 'task' | 'milestone' | string;
+  projectId?: string;
+  taskId?: string;
+  notificationLeadTime?: number;
+  repeatInterval?: number;
+  participants?: { email?: string; userId?: string }[];
+  createdByEmail?: string;
+  _id?: string;
+  userId?: string;
+}
+
+interface Project {
+  _id?: string;
+  name: string;
+  description: string;
+  owner: string;
+  phases: any[];
+  notes: string;
+  createdAt?: string;
+  updatedAt?: string;
+}
+
+interface SyncOptions {
+  includeAllTasks?: boolean;
+  includeMilestones?: boolean;
+  onlyUserTasks?: boolean;
+  notificationLeadTime?: number;
+}
 
 type FilterType = 'all' | 'events' | 'projects' | 'tasks' | 'milestones';
 
@@ -48,8 +86,38 @@ const UnifiedCalendar: React.FC<UnifiedCalendarProps> = ({ defaultFilter = 'all'
   });
   const [syncing, setSyncing] = useState(false);
   const [syncStats, setSyncStats] = useState<any>(null);
+  
+  // Stati per modal dettagli evento
+  const [showEventDetailsModal, setShowEventDetailsModal] = useState(false);
+  const [selectedEvent, setSelectedEvent] = useState<CalendarEvent | null>(null);
 
   const integration = new CalendarProjectIntegration();
+
+  // Helper functions per formattazione
+  const formatDate = (date: Date) => {
+    return date.toLocaleDateString('it-IT', {
+      weekday: 'long',
+      year: 'numeric',
+      month: 'long',
+      day: 'numeric'
+    });
+  };
+
+  const formatTime = (date: Date) => {
+    return date.toLocaleTimeString('it-IT', {
+      hour: '2-digit',
+      minute: '2-digit'
+    });
+  };
+
+  const getEventTypeLabel = (type?: string) => {
+    switch (type) {
+      case 'task': return '📋 Task Progetto';
+      case 'milestone': return '🎯 Milestone';
+      case 'event': return '📅 Evento';
+      default: return '📅 Evento';
+    }
+  };
 
   useEffect(() => {
     loadData();
@@ -268,7 +336,8 @@ const UnifiedCalendar: React.FC<UnifiedCalendarProps> = ({ defaultFilter = 'all'
         tooltipAccessor={(event) => event.description || event.title}
         onSelectEvent={(event) => {
           // Mostra dettagli evento
-          console.log('Selected event:', event);
+          setSelectedEvent(event);
+          setShowEventDetailsModal(true);
         }}
       />
 
@@ -367,6 +436,144 @@ const UnifiedCalendar: React.FC<UnifiedCalendarProps> = ({ defaultFilter = 'all'
           </Box>
         </Box>
       </Modal>
+
+      {/* Modal per visualizzare dettagli evento */}
+      <Dialog 
+        open={showEventDetailsModal} 
+        onClose={() => setShowEventDetailsModal(false)} 
+        maxWidth="md" 
+        fullWidth
+      >
+        <DialogTitle sx={{ bgcolor: 'primary.main', color: 'white', pb: 1 }}>
+          <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+            <Typography variant="h6" component="span">
+              {selectedEvent?.title}
+            </Typography>
+            <Chip 
+              label={getEventTypeLabel(selectedEvent?.type)} 
+              size="small" 
+              sx={{ bgcolor: 'rgba(255,255,255,0.2)', color: 'white' }}
+            />
+          </Box>
+        </DialogTitle>
+        
+        <DialogContent sx={{ pt: 3 }}>
+          {selectedEvent && (
+            <Box sx={{ display: 'flex', flexDirection: 'column', gap: 3 }}>
+              
+              {/* Informazioni data e ora */}
+              <Box>
+                <Typography variant="h6" gutterBottom sx={{ color: 'primary.main', fontWeight: 'bold' }}>
+                  📅 Data e Ora
+                </Typography>
+                <Box sx={{ ml: 2 }}>
+                  <Typography><strong>Data:</strong> {formatDate(selectedEvent.start)}</Typography>
+                  <Typography><strong>Orario:</strong> {formatTime(selectedEvent.start)} - {formatTime(selectedEvent.end)}</Typography>
+                  <Typography><strong>Durata:</strong> {Math.round((selectedEvent.end.getTime() - selectedEvent.start.getTime()) / (1000 * 60))} minuti</Typography>
+                </Box>
+              </Box>
+
+              {/* Descrizione */}
+              {selectedEvent.description && (
+                <Box>
+                  <Typography variant="h6" gutterBottom sx={{ color: 'primary.main', fontWeight: 'bold' }}>
+                    📝 Descrizione
+                  </Typography>
+                  <Typography sx={{ ml: 2, p: 2, bgcolor: 'grey.100', borderRadius: 1, whiteSpace: 'pre-wrap' }}>
+                    {selectedEvent.description}
+                  </Typography>
+                </Box>
+              )}
+
+              {/* Informazioni progetto */}
+              {selectedEvent.projectId && (
+                <Box>
+                  <Typography variant="h6" gutterBottom sx={{ color: 'primary.main', fontWeight: 'bold' }}>
+                    🚀 Informazioni Progetto
+                  </Typography>
+                  <Box sx={{ ml: 2, p: 2, bgcolor: 'blue.50', borderRadius: 1 }}>
+                    <Typography><strong>Tipo:</strong> {selectedEvent.type}</Typography>
+                    <Typography><strong>ID Progetto:</strong> {selectedEvent.projectId}</Typography>
+                    {selectedEvent.taskId && (
+                      <Typography><strong>ID Task:</strong> {selectedEvent.taskId}</Typography>
+                    )}
+                  </Box>
+                </Box>
+              )}
+
+              {/* Notifiche */}
+              <Box>
+                <Typography variant="h6" gutterBottom sx={{ color: 'primary.main', fontWeight: 'bold' }}>
+                  🔔 Notifiche
+                </Typography>
+                <Box sx={{ ml: 2 }}>
+                  <Typography>
+                    <strong>Preavviso notifica:</strong> {selectedEvent.notificationLeadTime && selectedEvent.notificationLeadTime > 0 ? `${selectedEvent.notificationLeadTime} minuti` : 'Nessuno'}
+                  </Typography>
+                  <Typography>
+                    <strong>Intervallo ripetizione:</strong> {selectedEvent.repeatInterval && selectedEvent.repeatInterval > 0 ? `${selectedEvent.repeatInterval} minuti` : 'Nessuno'}
+                  </Typography>
+                </Box>
+              </Box>
+
+              {/* Partecipanti */}
+              {selectedEvent.participants && selectedEvent.participants.length > 0 && (
+                <Box>
+                  <Typography variant="h6" gutterBottom sx={{ color: 'primary.main', fontWeight: 'bold' }}>
+                    👥 Partecipanti
+                  </Typography>
+                  <Box sx={{ ml: 2, display: 'flex', flexWrap: 'wrap', gap: 1 }}>
+                    {selectedEvent.participants.map((participant, index) => (
+                      <Chip 
+                        key={index} 
+                        label={participant.email || participant.userId || 'Partecipante'} 
+                        color="secondary" 
+                        variant="outlined" 
+                      />
+                    ))}
+                  </Box>
+                </Box>
+              )}
+
+              {/* Creatore evento */}
+              {selectedEvent.createdByEmail && (
+                <Box>
+                  <Typography variant="h6" gutterBottom sx={{ color: 'primary.main', fontWeight: 'bold' }}>
+                    👤 Creatore
+                  </Typography>
+                  <Typography sx={{ ml: 2 }}>
+                    {selectedEvent.createdByEmail}
+                  </Typography>
+                </Box>
+              )}
+
+              {/* Metadati */}
+              <Box>
+                <Typography variant="h6" gutterBottom sx={{ color: 'primary.main', fontWeight: 'bold' }}>
+                  ℹ️ Informazioni Tecniche
+                </Typography>
+                <Box sx={{ ml: 2, display: 'flex', flexDirection: 'column', gap: 0.5 }}>
+                  {selectedEvent._id && (
+                    <Typography variant="body2" color="text.secondary">
+                      <strong>ID:</strong> {selectedEvent._id}
+                    </Typography>
+                  )}
+                  <Typography variant="body2" color="text.secondary">
+                    <strong>User ID:</strong> {selectedEvent.userId}
+                  </Typography>
+                </Box>
+              </Box>
+
+            </Box>
+          )}
+        </DialogContent>
+        
+        <DialogActions>
+          <Button onClick={() => setShowEventDetailsModal(false)}>
+            Chiudi
+          </Button>
+        </DialogActions>
+      </Dialog>
     </div>
   );
 };

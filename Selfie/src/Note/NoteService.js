@@ -1,21 +1,134 @@
 
 
 
-// Funzione per aggiungere un evento al calendario per un to-do con scadenza
-export const addCalendarEventForTodo = async (todo, noteId) => {
-  const token = localStorage.getItem('token');
-  await fetch('http://localhost:3000/api/addcalendar', {
-    method: 'POST',
-    headers: {
-      'Content-Type': 'application/json',
-      'Authorization': `Bearer ${token}`,
-    },
-    body: JSON.stringify({
-      title: `To-Do: ${todo.text}`,
-      description: `Dalla nota ${noteId}`,
-      date: todo.deadline,
-    }),
-  });
+// Service for advanced Note-Calendar integration
+export const NoteCalendarIntegration = {
+  // Add calendar event for a to-do with deadline
+  async addCalendarEventForTodo(todo, noteId, noteTitle) {
+    try {
+      const token = localStorage.getItem('token');
+      const response = await fetch('/api/addcalendar', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${token}`,
+        },
+        body: JSON.stringify({
+          title: `📝 To-Do: ${todo.text}`,
+          description: `Dalla nota: "${noteTitle}" (ID: ${noteId})`,
+          date: todo.deadline,
+          noteId: noteId,
+          todoText: todo.text,
+          isFromNote: true
+        }),
+      });
+
+      if (response.ok) {
+        const event = await response.json();
+        console.log(`✅ Evento calendario creato per to-do: ${todo.text}`);
+        return event;
+      } else {
+        console.error('Errore nella creazione evento calendario:', response.statusText);
+        return null;
+      }
+    } catch (error) {
+      console.error('Errore durante creazione evento calendario:', error);
+      return null;
+    }
+  },
+
+  // Get calendar events created from notes
+  async getCalendarEventsFromNotes() {
+    try {
+      const token = localStorage.getItem('token');
+      const response = await fetch('/api/events?fromNotes=true', {
+        headers: {
+          'Authorization': `Bearer ${token}`,
+          'Content-Type': 'application/json',
+        },
+      });
+
+      if (response.ok) {
+        const events = await response.json();
+        return events.filter(event => event.isFromNote);
+      }
+      return [];
+    } catch (error) {
+      console.error('Errore recupero eventi da note:', error);
+      return [];
+    }
+  },
+
+  // Remove calendar events for a specific note
+  async removeCalendarEventsForNote(noteId) {
+    try {
+      const token = localStorage.getItem('token');
+      const response = await fetch(`/api/events/from-note/${noteId}`, {
+        method: 'DELETE',
+        headers: {
+          'Authorization': `Bearer ${token}`,
+          'Content-Type': 'application/json',
+        },
+      });
+
+      if (response.ok) {
+        const result = await response.json();
+        console.log(`🗑️ Rimossi ${result.deletedCount} eventi per nota ${noteId}`);
+        return result.deletedCount;
+      }
+      return 0;
+    } catch (error) {
+      console.error('Errore rimozione eventi nota:', error);
+      return 0;
+    }
+  },
+
+  // Sync all todos from a note to calendar
+  async syncNoteToCalendar(note, removeExisting = true) {
+    try {
+      if (removeExisting) {
+        await this.removeCalendarEventsForNote(note._id);
+      }
+
+      if (!note.todos || !Array.isArray(note.todos)) {
+        return { created: 0, errors: 0 };
+      }
+
+      let created = 0;
+      let errors = 0;
+
+      for (const todo of note.todos) {
+        if (todo.deadline && !todo.checked) {
+          const event = await this.addCalendarEventForTodo(todo, note._id, note.title);
+          if (event) {
+            created++;
+          } else {
+            errors++;
+          }
+        }
+      }
+
+      return { created, errors };
+    } catch (error) {
+      console.error('Errore sync nota calendario:', error);
+      return { created: 0, errors: 1 };
+    }
+  },
+
+  // Check if automatic sync is enabled for user
+  isAutoSyncEnabled() {
+    return localStorage.getItem('noteCalendarAutoSync') !== 'false';
+  },
+
+  // Enable/disable automatic sync
+  setAutoSync(enabled) {
+    localStorage.setItem('noteCalendarAutoSync', enabled.toString());
+  }
+};
+
+// Legacy function for backward compatibility
+export const addCalendarEventForTodo = async (todo, noteId, noteTitle = 'Nota') => {
+  return await NoteCalendarIntegration.addCalendarEventForTodo(todo, noteId, noteTitle);
 };
 
 // Funzione per aggiungere una nuova nota associata a un utente
@@ -30,7 +143,7 @@ export const addNoteForUser = async (title, content, accessType, accessList, tod
   if (accessType === 'limited' && username && !accessList.includes(username)) {
     safeAccessList = [...accessList, username];
   }
-  const response = await fetch('http://localhost:3000/api/addnote', {
+  const response = await fetch('/api/addnote', {
     method: 'POST',
     headers: {
       'Content-Type': 'application/json',
@@ -45,13 +158,10 @@ export const addNoteForUser = async (title, content, accessType, accessList, tod
 
   const newNote = await response.json();
 
-  // Se ci sono todos con deadline, aggiungi attività al calendario
-  if (todos && Array.isArray(todos)) {
-    for (const todo of todos) {
-      if (todo.deadline) {
-        await addCalendarEventForTodo(todo, newNote._id);
-      }
-    }
+  // Auto-sync to calendar if enabled
+  if (NoteCalendarIntegration.isAutoSyncEnabled()) {
+    const syncResult = await NoteCalendarIntegration.syncNoteToCalendar(newNote, false);
+    console.log(`📅 Sync risultato: ${syncResult.created} eventi creati, ${syncResult.errors} errori`);
   }
 
   return newNote;
@@ -72,7 +182,7 @@ export const updateNoteForUser = async (noteId, title, content, accessType, acce
   if (accessType === 'limited' && username && !accessList.includes(username)) {
     safeAccessList = [...accessList, username];
   }
-  const response = await fetch(`http://localhost:3000/api/updatenote/${noteId}`,{
+  const response = await fetch(`/api/updatenote/${noteId}`,{
     method:'PUT',
     headers: {
       'Content-Type': 'application/json',
@@ -86,13 +196,10 @@ export const updateNoteForUser = async (noteId, title, content, accessType, acce
   }
   const updatedNote = await response.json();
 
-  // Se ci sono todos con deadline, aggiungi attività al calendario
-  if (todos && Array.isArray(todos)) {
-    for (const todo of todos) {
-      if (todo.deadline) {
-        await addCalendarEventForTodo(todo, updatedNote._id);
-      }
-    }
+  // Auto-sync to calendar if enabled
+  if (NoteCalendarIntegration.isAutoSyncEnabled()) {
+    const syncResult = await NoteCalendarIntegration.syncNoteToCalendar(updatedNote, true);
+    console.log(`🔄 Update sync risultato: ${syncResult.created} eventi creati, ${syncResult.errors} errori`);
   }
 
   return updatedNote;
@@ -102,7 +209,12 @@ export const updateNoteForUser = async (noteId, title, content, accessType, acce
 export const deleteNoteForUser = async (noteId) => {
   const token = localStorage.getItem('token');
 
-  const response = await fetch(`http://localhost:3000/api/deletenote/${noteId}`, {
+  // Remove associated calendar events first
+  if (NoteCalendarIntegration.isAutoSyncEnabled()) {
+    await NoteCalendarIntegration.removeCalendarEventsForNote(noteId);
+  }
+
+  const response = await fetch(`/api/deletenote/${noteId}`, {
     method: 'DELETE',
     headers: {
       'Content-Type': 'application/json',
@@ -120,7 +232,7 @@ export const deleteNoteForUser = async (noteId) => {
 export const getNotesForUser = async (userId) => {
   const token = localStorage.getItem('token'); 
 
-  const response = await fetch(`http://localhost:3000/api/getnotes?userId=${userId}`, {
+  const response = await fetch(`/api/getnotes?userId=${userId}`, {
     method: 'GET',
     headers: {
       'Content-Type': 'application/json',
@@ -141,7 +253,7 @@ export const getNotesForUser = async (userId) => {
 export const getUsers = async () => {
   const token = localStorage.getItem("token");
 
-  const response = await fetch("http://localhost:3000/api/users", {
+  const response = await fetch("/api/users", {
     method: "GET",
     headers: {
       "Content-Type": "application/json",

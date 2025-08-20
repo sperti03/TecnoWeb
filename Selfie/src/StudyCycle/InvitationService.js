@@ -1,6 +1,6 @@
 // InvitationService.js - Frontend service for invitation management
 
-const API_BASE_URL = 'http://localhost:3000/api/invitations';
+const API_BASE_URL = '/api/invitations';
 
 export const InvitationService = {
   // Send study invitation

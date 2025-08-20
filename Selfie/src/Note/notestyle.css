@@ -795,3 +795,160 @@ body.modal-open {
   border: 2px solid #6c63ff;
   box-shadow: 0 0 0 2px #6c63ff33;
 }
+
+/* Calendar Integration Panel */
+.calendar-integration-panel {
+  background: linear-gradient(135deg, #e8f5e8 0%, #f0f8ff 100%);
+  border: 2px solid #4caf50;
+  border-radius: 12px;
+  padding: 16px;
+  margin: 20px 0;
+  box-shadow: 0 2px 8px rgba(76, 175, 80, 0.1);
+}
+
+.calendar-controls {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 12px;
+  margin-bottom: 12px;
+}
+
+.calendar-toggle {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.toggle-switch {
+  position: relative;
+  display: inline-block;
+  width: 50px;
+  height: 24px;
+}
+
+.toggle-switch input {
+  opacity: 0;
+  width: 0;
+  height: 0;
+}
+
+.toggle-slider {
+  position: absolute;
+  cursor: pointer;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background-color: #ccc;
+  transition: .4s;
+  border-radius: 24px;
+}
+
+.toggle-slider:before {
+  position: absolute;
+  content: "";
+  height: 18px;
+  width: 18px;
+  left: 3px;
+  bottom: 3px;
+  background-color: white;
+  transition: .4s;
+  border-radius: 50%;
+}
+
+input:checked + .toggle-slider {
+  background-color: #4caf50;
+}
+
+input:checked + .toggle-slider:before {
+  transform: translateX(26px);
+}
+
+.toggle-label {
+  font-weight: 600;
+  color: #2e7d32;
+  font-size: 14px;
+}
+
+.calendar-info {
+  color: #666;
+  font-size: 13px;
+  font-style: italic;
+}
+
+.events-count {
+  background: rgba(76, 175, 80, 0.1);
+  padding: 4px 8px;
+  border-radius: 6px;
+  color: #2e7d32;
+  font-weight: 500;
+}
+
+.calendar-actions {
+  display: flex;
+  gap: 8px;
+}
+
+.sync-btn {
+  background: linear-gradient(135deg, #4caf50 0%, #2e7d32 100%);
+  color: white;
+  border: none;
+  padding: 8px 16px;
+  border-radius: 8px;
+  font-size: 13px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  box-shadow: 0 2px 6px rgba(76, 175, 80, 0.3);
+}
+
+.sync-btn:hover:not(:disabled) {
+  transform: translateY(-1px);
+  box-shadow: 0 4px 12px rgba(76, 175, 80, 0.4);
+}
+
+.sync-btn:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+  transform: none;
+}
+
+.sync-note-btn {
+  background: linear-gradient(135deg, #2196f3 0%, #1976d2 100%);
+  color: white;
+  border: none;
+  padding: 6px 8px;
+  border-radius: 6px;
+  font-size: 14px;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  margin-right: 4px;
+  box-shadow: 0 2px 4px rgba(33, 150, 243, 0.3);
+}
+
+.sync-note-btn:hover {
+  transform: translateY(-1px);
+  box-shadow: 0 4px 8px rgba(33, 150, 243, 0.4);
+}
+
+/* Responsive design for calendar panel */
+@media (max-width: 768px) {
+  .calendar-controls {
+    flex-direction: column;
+    align-items: flex-start;
+  }
+  
+  .calendar-toggle {
+    width: 100%;
+  }
+  
+  .calendar-actions {
+    width: 100%;
+    justify-content: center;
+  }
+}

@@ -1,6 +1,6 @@
 // StudyCycleService.js - Frontend service for study cycle management
 
-const API_BASE_URL = 'http://localhost:3000/api/study-cycles';
+const API_BASE_URL = '/api/study-cycles';
 
 export const StudyCycleService = {
   // Create a new study cycle

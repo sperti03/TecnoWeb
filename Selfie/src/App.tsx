@@ -14,11 +14,13 @@ import HomePage from "./Homepage/HomePage";
 import NoteHome from "./Note/NoteHome";
 import TimeMachineComponent from "./TimeMachine/TimeMachine";
 import CalendarHome from "./calendar/Calendar";
+import MasterCalendar from "./calendar/MasterCalendar";
 import Pomodoro from "./Pomodoro/pomodoro";
-import ProjectHome from "./Progetti/ProjectHome";
+import ProjectHome from "./Progetti/ProjectHome.js";
 import UnifiedCalendar from './calendar/UnifiedCalendar';
 import AdvancedCalendar from './calendar/AdvancedCalendar';
 import CalendarDashboard from './calendar/CalendarDashboard';
+import StudyCycleManager from './StudyCycle/StudyCycleManager';
 import { NotificationService } from "./services/NotificationService";
 import { StudyCycleAutoService } from "./services/StudyCycleAutoService";
 
@@ -77,17 +79,33 @@ function Layout() {
     return () => clearInterval(interval);
   }, [currentUser]);
 
-  // Check for incomplete cycles and move them to next day
+  // Initialize auto-reschedule system and check for incomplete cycles
   useEffect(() => {
     if (!currentUser) return;
 
+    // Initialize the automatic reschedule system
+    const initAutoReschedule = async () => {
+      try {
+        // Request notification permission
+        await StudyCycleAutoService.requestNotificationPermission();
+        
+        // Initialize daily auto-reschedule system
+        StudyCycleAutoService.initializeAutoReschedule();
+        
+        console.log('🕰️ Study Cycle auto-reschedule system initialized');
+      } catch (error) {
+        console.error('Error initializing auto-reschedule system:', error);
+      }
+    };
+
+    initAutoReschedule();
+
+    // Also check immediately for any incomplete cycles
     const checkIncompleteCycles = async () => {
       try {
-        const movedCount = await StudyCycleAutoService.autoMoveIncompleteCycles(
-          currentUser.id
-        );
-        if (movedCount > 0) {
-          console.log(`Moved ${movedCount} incomplete study cycles to today`);
+        const result = await StudyCycleAutoService.autoRescheduleIncomplete();
+        if (result.success && result.count > 0) {
+          console.log(`✅ Auto-rescheduled ${result.count} incomplete study cycles to today`);
         }
       } catch (error) {
         console.error("Error checking incomplete cycles:", error);
@@ -167,14 +185,16 @@ function Layout() {
           }
         />
         <Route path="/Note" element={<NoteHome />} />
-        <Route path="/CalendarHome" element={<CalendarHome />} />
-        <Route path="/calendar" element={<CalendarHome />} />
-        <Route path="/calendario-unificato" element={<UnifiedCalendar />} />
-        <Route path="/calendario-avanzato" element={<AdvancedCalendar />} />
-        <Route path="/calendario-dashboard" element={<CalendarDashboard />} />
+                  <Route path="/CalendarHome" element={<MasterCalendar />} />
+          <Route path="/calendar" element={<MasterCalendar />} />
+          <Route path="/calendario-unificato" element={<MasterCalendar />} />
+          <Route path="/calendario-avanzato" element={<MasterCalendar />} />
+          <Route path="/calendario-dashboard" element={<MasterCalendar />} />
+          <Route path="/master-calendar" element={<MasterCalendar />} />
         <Route path="/Pomodoro" element={<Pomodoro />} />
         <Route path="/Projects" element={<ProjectHome />} />
         <Route path="/progetti" element={<ProjectHome />} />
+        <Route path="/studycycle" element={<StudyCycleManager />} />
         <Route path="/time-machine" element={<TimeMachineComponent />} />
       </Routes>
     </>
