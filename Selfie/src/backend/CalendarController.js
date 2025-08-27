@@ -10,6 +10,12 @@ import EmailService from './EmailService.js';
 import cron from 'node-cron';
 import User from './UserModel.js';
 dotenv.config();
+
+if (mongoose.connection.readyState === 0) {
+  mongoose.connect(process.env.MONGO_URI)
+    .then(() => console.log('MongoDB connected (CalendarController)'))
+    .catch(err => console.error('MongoDB connection error (CalendarController):', err));
+}
 /**
  * @typedef {Object} JwtPayload
  * @property {string} [iss] - Issuer
@@ -1050,7 +1056,17 @@ const sendReminders = async () => {
   }
 };
 
-// Esegui ogni minuto
-cron.schedule('* * * * *', sendReminders);
+// Esegui ogni minuto solo quando la connessione è pronta
+cron.schedule('* * * * *', async () => {
+  if (mongoose.connection.readyState !== 1) {
+    console.warn(`[${new Date().toISOString()}] [NODE-CRON] Skip reminders: DB not connected`);
+    return;
+  }
+  try {
+    await sendReminders();
+  } catch (err) {
+    console.error(`[${new Date().toISOString()}] [NODE-CRON] Error in reminders`, err);
+  }
+});
 
 export default CalendarRoutes;

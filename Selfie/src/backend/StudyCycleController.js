@@ -9,6 +9,12 @@ dotenv.config();
 
 const studyCycleRoutes = express.Router();
 
+if (mongoose.connection.readyState === 0) {
+  mongoose.connect(process.env.MONGO_URI)
+    .then(() => console.log('MongoDB connected (StudyCycleController)'))
+    .catch(err => console.error('MongoDB connection error (StudyCycleController):', err));
+}
+
 // Middleware
 studyCycleRoutes.use(cors());
 studyCycleRoutes.use(express.json());

@@ -10,6 +10,12 @@ dotenv.config();
 
 const messageRoutes = express.Router();
 
+if (mongoose.connection.readyState === 0) {
+  mongoose.connect(process.env.MONGO_URI)
+    .then(() => console.log('MongoDB connected (MessageController)'))
+    .catch(err => console.error('MongoDB connection error (MessageController):', err));
+}
+
 
 // Middleware
 messageRoutes.use(cors());

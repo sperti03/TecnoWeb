@@ -9,6 +9,13 @@ import dotenv from 'dotenv';
 import User from './UserModel.js'; 
 dotenv.config();
 
+// Connect only if not connected to avoid breaking the default connection
+if (mongoose.connection.readyState === 0) {
+  mongoose.connect(process.env.MONGO_URI)
+    .then(() => console.log('MongoDB connected (NoteController)'))
+    .catch(err => console.error('MongoDB connection error (NoteController):', err));
+}
+
 /**
  * @typedef {Object} JwtPayload
  * @property {string} [iss] - Issuer

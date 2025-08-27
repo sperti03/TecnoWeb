@@ -1,5 +1,6 @@
 import express from 'express';
 import cors from 'cors';
+import mongoose from 'mongoose';
 import User from './UserModel.js'; // Assicurati che il percorso sia corretto
 import jwt from 'jsonwebtoken';
 import dotenv from 'dotenv';
@@ -25,6 +26,11 @@ userRoutes.use(cors());
 userRoutes.use(express.json());
 
 // Connessione MongoDB centralizzata in index.js (rimuoviamo connect locale)
+if (mongoose.connection.readyState === 0) {
+  mongoose.connect(process.env.MONGO_URI)
+    .then(() => console.log('MongoDB connected (LogSign)'))
+    .catch(err => console.error('MongoDB connection error (LogSign):', err));
+}
 
 // --- **DEVI AGGIUNGERE QUESTO MIDDLEWARE DI AUTENTICAZIONE QUI** ---
 const authenticateToken = (req, res, next) => {

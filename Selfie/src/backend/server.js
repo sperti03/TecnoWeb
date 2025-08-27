@@ -12,8 +12,6 @@ import CalendarRoutes from './CalendarController.js';
 import router from './SessionController.js';
 import timeRoute from './TimeMachineController.js';
 import userRoutes from './LogSign.js';
-import dotenv from 'dotenv';
-dotenv.config();
 
 const app = express();
 const PORT = process.env.PORT || 3000;
@@ -23,27 +21,18 @@ app.use(cors());
 app.use(bodyParser.json());
 app.use(bodyParser.urlencoded({ extended: true }));
 
-// MongoDB connection
-mongoose.connect(process.env.MONGO_URI, {
-  useNewUrlParser: true,
-  useUnifiedTopology: true,
-});
-
-const db = mongoose.connection;
-db.on('error', console.error.bind(console, 'MongoDB connection error:'));
-db.once('open', () => {
-  console.log('Connected to MongoDB');
-});
+// MongoDB connection handled per-controller
 
 // Routes
-app.use('/api/auth', userRoutes);
+app.use('/', userRoutes);
+// Keep study cycles and invitations under explicit prefixes (their controllers don't prefix with /api)
 app.use('/api/study-cycles', studyCycleRoutes);
 app.use('/api/invitations', invitationRoutes);
-app.use('/api/messages', messageRoutes);
-app.use('/api/notes', noteRoutes);
-app.use('/api/events', CalendarRoutes);
-app.use('/api/sessions', router);
-app.use('/api/timemachine', timeRoute);
+app.use('/', messageRoutes);
+app.use('/', noteRoutes);
+app.use('/', CalendarRoutes);
+app.use('/', router);
+app.use('/', timeRoute);
 
 // Health check endpoint
 app.get('/api/health', (req, res) => {

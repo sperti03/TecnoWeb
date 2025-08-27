@@ -10,6 +10,12 @@ import EmailService from './EmailService.js';
 
 const invitationRoutes = express.Router();
 
+if (mongoose.connection.readyState === 0) {
+  mongoose.connect(process.env.MONGO_URI)
+    .then(() => console.log('MongoDB connected (InvitationController)'))
+    .catch(err => console.error('MongoDB connection error (InvitationController):', err));
+}
+
 // Middleware
 invitationRoutes.use(cors());
 invitationRoutes.use(express.json());

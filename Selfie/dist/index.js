@@ -1,3 +1,4 @@
+import 'dotenv/config';
 import express from 'express';
 import { MongoClient } from 'mongodb';
 import cors from 'cors';
@@ -10,9 +11,6 @@ import studyCycleRoutes from '../src/backend/StudyCycleController.js'
 import invitationRoutes from '../src/backend/InvitationController.js'
 import sessionRoutes from '../src/backend/SessionController.js'
 import projectRoutes from '../src/backend/ProjectController.js'
-
-import dotenv from 'dotenv';
-dotenv.config();
 const app = express();
 const port = 8000; // Porta per il server Express
 

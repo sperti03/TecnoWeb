@@ -9,6 +9,12 @@ import EmailService from './EmailService.js';
 
 const projectRoutes = express.Router();
 
+if (mongoose.connection.readyState === 0) {
+  mongoose.connect(process.env.MONGO_URI)
+    .then(() => console.log('MongoDB connected (ProjectController)'))
+    .catch(err => console.error('MongoDB connection error (ProjectController):', err));
+}
+
 projectRoutes.use(cors());
 projectRoutes.use(express.json());
 

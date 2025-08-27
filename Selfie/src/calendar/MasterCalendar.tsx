@@ -1127,6 +1127,7 @@ const MasterCalendar: React.FC<MasterCalendarProps> = ({
               notifications={notifications}
               onAccept={onAcceptInvitation}
               onDecline={onDeclineInvitation}
+              inline
             />
           </Badge>
         </Toolbar>

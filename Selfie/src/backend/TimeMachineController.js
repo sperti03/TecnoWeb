@@ -8,10 +8,10 @@ dotenv.config();
 
 const timeMachineRoutes = express.Router();
 
-// Middleware per debugging
+// Middleware per debugging (ensure next is called)
 timeMachineRoutes.use((req, res, next) => {
- // console.log(`🕰️ TimeMachine ${req.method} ${req.path}`, req.body);
- // next();
+  // console.log(`🕰️ TimeMachine ${req.method} ${req.path}`, req.body);
+  next();
 });
 
 // GET /api/timemachine/gettime - Ottiene il tempo corrente (virtuale o reale)
