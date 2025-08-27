@@ -1,4 +1,3 @@
-import mongoose from 'mongoose';
 import express from 'express';
 import cors from 'cors';
 import User from './UserModel.js'; // Assicurati che il percorso sia corretto
@@ -25,18 +24,7 @@ const userRoutes = express.Router();
 userRoutes.use(cors());
 userRoutes.use(express.json());
 
-// MongoDB connection
-const mongoUri = process.env.MONGO_URI;
-mongoose.connect(mongoUri, {
-  // Le opzioni { useNewUrlParser: true, useUnifiedTopology: true } sono deprecate in Mongoose 6+
-  // e possono essere rimosse. Se usi una versione più vecchia, potresti volerle lasciare.
-})
-  .then(() => {
-    console.log('Connected to MongoDB, logsign');
-  })
-  .catch(err => {
-    console.error('Failed to connect to MongoDB', err);
-  });
+// Connessione MongoDB centralizzata in index.js (rimuoviamo connect locale)
 
 // --- **DEVI AGGIUNGERE QUESTO MIDDLEWARE DI AUTENTICAZIONE QUI** ---
 const authenticateToken = (req, res, next) => {

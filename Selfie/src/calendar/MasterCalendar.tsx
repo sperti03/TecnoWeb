@@ -43,8 +43,9 @@ import {
   Drawer,
   AppBar,
   Toolbar,
-  Divider
+  Divider,
 } from "@mui/material";
+import NotificationButton from "../components/NotificationButton/NotificationButton";
 import {
   EventNote as EventIcon,
   FilterList as FilterIcon,
@@ -67,15 +68,15 @@ import {
   Notifications as NotificationsIcon,
   Timer as TimerIcon,
   Close as CloseIcon,
-  Menu as MenuIcon
+  Menu as MenuIcon,
 } from "@mui/icons-material";
 import "./MasterCalendar.css";
 
 // Import degli altri componenti calendario
-import CalendarImportExport from './CalendarImportExport';
-import CalendarProjectIntegration from '../Progetti/CalendarProjectIntegration.js';
-import { StudyCycleService } from '../StudyCycle/StudyCycleService';
-import { StudyCycleAutoService } from '../services/StudyCycleAutoService';
+import CalendarImportExport from "./CalendarImportExport";
+import CalendarProjectIntegration from "../Progetti/CalendarProjectIntegration.js";
+import { StudyCycleService } from "../StudyCycle/StudyCycleService";
+import { StudyCycleAutoService } from "../services/StudyCycleAutoService";
 
 const localizer = momentLocalizer(moment);
 
@@ -86,38 +87,51 @@ interface UnifiedEvent {
   start: Date;
   end: Date;
   description?: string;
-  
+
   // Tipologia e metadati
-  eventType: 'general' | 'study-cycle' | 'project' | 'note-todo' | 'recurring' | 'milestone';
-  category: 'personal' | 'work' | 'study' | 'meeting' | 'reminder' | 'project' | 'milestone';
-  priority: 'low' | 'medium' | 'high' | 'urgent';
+  eventType:
+    | "general"
+    | "study-cycle"
+    | "project"
+    | "note-todo"
+    | "recurring"
+    | "milestone";
+  category:
+    | "personal"
+    | "work"
+    | "study"
+    | "meeting"
+    | "reminder"
+    | "project"
+    | "milestone";
+  priority: "low" | "medium" | "high" | "urgent";
   color: string;
   location?: string;
-  
+
   // Partecipanti e condivisione
   participants?: string[];
   sharedWith?: string[];
   createdBy?: string;
-  
+
   // Eventi ricorrenti
   isRecurring?: boolean;
   parentEventId?: string;
   recurrenceRule?: {
-    frequency: 'none' | 'daily' | 'weekly' | 'monthly' | 'yearly';
+    frequency: "none" | "daily" | "weekly" | "monthly" | "yearly";
     interval: number;
     endDate?: Date;
     daysOfWeek?: number[];
     maxOccurrences?: number;
   };
-  
+
   // Integrazione progetti
   isProjectEvent?: boolean;
   projectEventData?: {
     projectId: string;
     taskId: string;
-    type: 'task' | 'milestone' | 'deadline';
+    type: "task" | "milestone" | "deadline";
   };
-  
+
   // Study cycles
   studyCycleId?: string;
   studyCycleData?: {
@@ -126,15 +140,15 @@ interface UnifiedEvent {
     cycles: number;
     subject: string;
   };
-  
+
   // Note integration
   noteId?: string;
   todoText?: string;
-  
+
   // Notifiche e reminder
   notificationLeadTime: number;
   reminderSent?: boolean;
-  
+
   // Metadati
   userId: string;
   createdAt: Date;
@@ -142,9 +156,23 @@ interface UnifiedEvent {
 }
 
 interface FilterState {
-  eventType: 'all' | 'general' | 'study-cycle' | 'project' | 'note-todo' | 'recurring';
-  category: 'all' | 'personal' | 'work' | 'study' | 'meeting' | 'reminder' | 'project' | 'milestone';
-  priority: 'all' | 'low' | 'medium' | 'high' | 'urgent';
+  eventType:
+    | "all"
+    | "general"
+    | "study-cycle"
+    | "project"
+    | "note-todo"
+    | "recurring";
+  category:
+    | "all"
+    | "personal"
+    | "work"
+    | "study"
+    | "meeting"
+    | "reminder"
+    | "project"
+    | "milestone";
+  priority: "all" | "low" | "medium" | "high" | "urgent";
   showRecurringOnly: boolean;
   location: string;
   dateRange: {
@@ -166,29 +194,48 @@ interface Statistics {
   eventsByType: Array<{ _id: string; count: number }>;
 }
 
-const MasterCalendar: React.FC = () => {
+interface Invitation {
+  _id: string;
+  senderId: { username: string; email: string };
+  studySettings: any;
+  message: string;
+  status: string;
+  createdAt: string;
+}
+
+interface MasterCalendarProps {
+  notifications?: Invitation[];
+  onAcceptInvitation?: (invitationId: string) => void;
+  onDeclineInvitation?: (invitationId: string) => void;
+}
+
+const MasterCalendar: React.FC<MasterCalendarProps> = ({
+  notifications = [],
+  onAcceptInvitation = () => {},
+  onDeclineInvitation = () => {},
+}) => {
   // Stati principali
   const [events, setEvents] = useState<UnifiedEvent[]>([]);
   const [filteredEvents, setFilteredEvents] = useState<UnifiedEvent[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [statistics, setStatistics] = useState<Statistics | null>(null);
-  
+
   // UI State
   const [currentTab, setCurrentTab] = useState(0);
   const [drawerOpen, setDrawerOpen] = useState(false);
   const [speedDialOpen, setSpeedDialOpen] = useState(false);
-  
+
   // Filtri e ricerca
   const [filters, setFilters] = useState<FilterState>({
-    eventType: 'all',
-    category: 'all',
-    priority: 'all',
+    eventType: "all",
+    category: "all",
+    priority: "all",
     showRecurringOnly: false,
-    location: '',
-    dateRange: {}
+    location: "",
+    dateRange: {},
   });
-  
+
   // Modali
   const [showEventModal, setShowEventModal] = useState(false);
   const [showRecurrenceModal, setShowRecurrenceModal] = useState(false);
@@ -197,59 +244,62 @@ const MasterCalendar: React.FC = () => {
   const [showImportExportModal, setShowImportExportModal] = useState(false);
   const [showStatsModal, setShowStatsModal] = useState(false);
   const [showEventDetailsModal, setShowEventDetailsModal] = useState(false);
-  
+
   // Eventi selezionati e form
-  const [selectedSlot, setSelectedSlot] = useState<{start: Date; end: Date} | null>(null);
+  const [selectedSlot, setSelectedSlot] = useState<{
+    start: Date;
+    end: Date;
+  } | null>(null);
   const [selectedEvent, setSelectedEvent] = useState<UnifiedEvent | null>(null);
   const [eventForm, setEventForm] = useState({
-    title: '',
-    description: '',
-    category: 'personal',
-    priority: 'medium',
-    color: '#4caf50',
-    location: '',
+    title: "",
+    description: "",
+    category: "personal",
+    priority: "medium",
+    color: "#4caf50",
+    location: "",
     notificationLeadTime: 0,
     participants: [] as string[],
-    participantEmail: '',
-    eventType: 'general',
+    participantEmail: "",
+    eventType: "general",
     isRecurring: false,
     recurrenceRule: {
-      frequency: 'none' as const,
+      frequency: "none" as const,
       interval: 1,
       endDate: undefined as Date | undefined,
       daysOfWeek: [] as number[],
-      maxOccurrences: undefined as number | undefined
-    }
+      maxOccurrences: undefined as number | undefined,
+    },
   });
 
   // Sincronizzazione e integrazione
   const [syncStatus, setSyncStatus] = useState({
     projects: false,
     studyCycles: false,
-    notes: false
+    notes: false,
   });
 
   const getAuthHeaders = () => {
-    const token = localStorage.getItem('token');
+    const token = localStorage.getItem("token");
     return {
-      'Content-Type': 'application/json',
-      'Authorization': `Bearer ${token}`,
+      "Content-Type": "application/json",
+      Authorization: `Bearer ${token}`,
     };
   };
 
   // =======================
   // CARICAMENTO DATI
   // =======================
-  
+
   useEffect(() => {
     loadAllData();
-    
+
     // Auto-reschedule per study cycles
     autoRescheduleStudyCycles();
-    
+
     // Setup notifiche
     setupNotifications();
-    
+
     // Cleanup interval
     const intervalId = setInterval(checkUpcomingEvents, 60000);
     return () => clearInterval(intervalId);
@@ -263,10 +313,10 @@ const MasterCalendar: React.FC = () => {
         loadStatistics(),
         syncProjectEvents(),
         syncStudyCycleEvents(),
-        syncNoteEvents()
+        syncNoteEvents(),
       ]);
     } catch (err) {
-      setError('Errore nel caricamento dei dati');
+      setError("Errore nel caricamento dei dati");
     } finally {
       setLoading(false);
     }
@@ -274,40 +324,40 @@ const MasterCalendar: React.FC = () => {
 
   const loadEvents = async () => {
     try {
-      const response = await fetch('/api/events', {
+      const response = await fetch("/api/events", {
         headers: getAuthHeaders(),
       });
-      
-      if (!response.ok) throw new Error('Failed to fetch events');
-      
+
+      if (!response.ok) throw new Error("Failed to fetch events");
+
       const data = await response.json();
       const unifiedEvents = data.map((event: any) => ({
         ...event,
         start: new Date(event.start),
         end: new Date(event.end),
         createdAt: new Date(event.createdAt || Date.now()),
-        updatedAt: new Date(event.updatedAt || Date.now())
+        updatedAt: new Date(event.updatedAt || Date.now()),
       }));
-      
+
       setEvents(unifiedEvents);
       setFilteredEvents(unifiedEvents);
     } catch (err) {
-      console.error('Error loading events:', err);
+      console.error("Error loading events:", err);
     }
   };
 
   const loadStatistics = async () => {
     try {
-      const response = await fetch('/api/events/statistics', {
+      const response = await fetch("/api/events/statistics", {
         headers: getAuthHeaders(),
       });
-      
+
       if (response.ok) {
         const stats = await response.json();
         setStatistics(stats);
       }
     } catch (err) {
-      console.error('Error loading statistics:', err);
+      console.error("Error loading statistics:", err);
     }
   };
 
@@ -317,59 +367,59 @@ const MasterCalendar: React.FC = () => {
 
   const syncProjectEvents = async () => {
     try {
-      setSyncStatus(prev => ({ ...prev, projects: true }));
+      setSyncStatus((prev) => ({ ...prev, projects: true }));
       // Implementa sincronizzazione progetti
-      console.log('Syncing project events...');
-      
+      console.log("Syncing project events...");
+
       // Qui andrà la logica di sincronizzazione con i progetti
-      
-      setSyncStatus(prev => ({ ...prev, projects: false }));
+
+      setSyncStatus((prev) => ({ ...prev, projects: false }));
     } catch (err) {
-      console.error('Error syncing project events:', err);
-      setSyncStatus(prev => ({ ...prev, projects: false }));
+      console.error("Error syncing project events:", err);
+      setSyncStatus((prev) => ({ ...prev, projects: false }));
     }
   };
 
   const syncStudyCycleEvents = async () => {
     try {
-      setSyncStatus(prev => ({ ...prev, studyCycles: true }));
+      setSyncStatus((prev) => ({ ...prev, studyCycles: true }));
       await StudyCycleAutoService.syncToCalendar();
-      setSyncStatus(prev => ({ ...prev, studyCycles: false }));
+      setSyncStatus((prev) => ({ ...prev, studyCycles: false }));
     } catch (err) {
-      console.error('Error syncing study cycle events:', err);
-      setSyncStatus(prev => ({ ...prev, studyCycles: false }));
+      console.error("Error syncing study cycle events:", err);
+      setSyncStatus((prev) => ({ ...prev, studyCycles: false }));
     }
   };
 
   const syncNoteEvents = async () => {
     try {
-      setSyncStatus(prev => ({ ...prev, notes: true }));
-      
+      setSyncStatus((prev) => ({ ...prev, notes: true }));
+
       // Carica eventi dalle note con to-do
-      const response = await fetch('/api/events?fromNotes=true', {
+      const response = await fetch("/api/events?fromNotes=true", {
         headers: getAuthHeaders(),
       });
-      
+
       if (response.ok) {
         const noteEvents = await response.json();
         // Merge con eventi esistenti
-        setEvents(prev => {
-          const nonNoteEvents = prev.filter(e => e.eventType !== 'note-todo');
+        setEvents((prev) => {
+          const nonNoteEvents = prev.filter((e) => e.eventType !== "note-todo");
           const mappedNoteEvents = noteEvents.map((event: any) => ({
             ...event,
             start: new Date(event.start),
             end: new Date(event.end),
-            eventType: 'note-todo' as const,
-            category: 'reminder' as const
+            eventType: "note-todo" as const,
+            category: "reminder" as const,
           }));
           return [...nonNoteEvents, ...mappedNoteEvents];
         });
       }
-      
-      setSyncStatus(prev => ({ ...prev, notes: false }));
+
+      setSyncStatus((prev) => ({ ...prev, notes: false }));
     } catch (err) {
-      console.error('Error syncing note events:', err);
-      setSyncStatus(prev => ({ ...prev, notes: false }));
+      console.error("Error syncing note events:", err);
+      setSyncStatus((prev) => ({ ...prev, notes: false }));
     }
   };
 
@@ -393,38 +443,48 @@ const MasterCalendar: React.FC = () => {
     let filtered = [...events];
 
     // Filtro per tipo evento
-    if (filters.eventType !== 'all') {
-      filtered = filtered.filter(event => event.eventType === filters.eventType);
+    if (filters.eventType !== "all") {
+      filtered = filtered.filter(
+        (event) => event.eventType === filters.eventType
+      );
     }
 
     // Filtro per categoria
-    if (filters.category !== 'all') {
-      filtered = filtered.filter(event => event.category === filters.category);
+    if (filters.category !== "all") {
+      filtered = filtered.filter(
+        (event) => event.category === filters.category
+      );
     }
 
     // Filtro per priorità
-    if (filters.priority !== 'all') {
-      filtered = filtered.filter(event => event.priority === filters.priority);
+    if (filters.priority !== "all") {
+      filtered = filtered.filter(
+        (event) => event.priority === filters.priority
+      );
     }
 
     // Filtro per eventi ricorrenti
     if (filters.showRecurringOnly) {
-      filtered = filtered.filter(event => event.isRecurring);
+      filtered = filtered.filter((event) => event.isRecurring);
     }
 
     // Filtro per location
     if (filters.location) {
-      filtered = filtered.filter(event => 
+      filtered = filtered.filter((event) =>
         event.location?.toLowerCase().includes(filters.location.toLowerCase())
       );
     }
 
     // Filtro per date range
     if (filters.dateRange.start) {
-      filtered = filtered.filter(event => event.start >= filters.dateRange.start!);
+      filtered = filtered.filter(
+        (event) => event.start >= filters.dateRange.start!
+      );
     }
     if (filters.dateRange.end) {
-      filtered = filtered.filter(event => event.end <= filters.dateRange.end!);
+      filtered = filtered.filter(
+        (event) => event.end <= filters.dateRange.end!
+      );
     }
 
     setFilteredEvents(filtered);
@@ -437,76 +497,82 @@ const MasterCalendar: React.FC = () => {
   const handleSelectSlot = ({ start, end }: { start: Date; end: Date }) => {
     setSelectedSlot({ start, end });
     setEventForm({
-      title: '',
-      description: '',
-      category: 'personal',
-      priority: 'medium',
-      color: '#4caf50',
-      location: '',
+      title: "",
+      description: "",
+      category: "personal",
+      priority: "medium",
+      color: "#4caf50",
+      location: "",
       notificationLeadTime: 0,
       participants: [],
-      participantEmail: '',
-      eventType: 'general',
+      participantEmail: "",
+      eventType: "general",
       isRecurring: false,
       recurrenceRule: {
-        frequency: 'none',
+        frequency: "none",
         interval: 1,
         endDate: undefined,
         daysOfWeek: [],
-        maxOccurrences: undefined
-      }
+        maxOccurrences: undefined,
+      },
     });
     setShowEventModal(true);
   };
 
   const handleEventClick = (event: UnifiedEvent) => {
     setSelectedEvent(event);
-    
+
     // Azioni specifiche per tipo evento
     switch (event.eventType) {
-      case 'study-cycle':
+      case "study-cycle":
         if (event.studyCycleId) {
           const shouldOpenPomodoro = window.confirm(
-            'Questo è un Study Cycle. Vuoi aprire il Pomodoro Timer?'
+            "Questo è un Study Cycle. Vuoi aprire il Pomodoro Timer?"
           );
           if (shouldOpenPomodoro) {
-            window.open(`/Pomodoro?studyCycleId=${event.studyCycleId}`, '_blank');
+            window.open(
+              `/Pomodoro?studyCycleId=${event.studyCycleId}`,
+              "_blank"
+            );
             return;
           }
         }
         break;
-        
-      case 'project':
+
+      case "project":
         if (event.projectEventData) {
           const shouldOpenProject = window.confirm(
-            'Questo è un evento di progetto. Vuoi aprire il progetto?'
+            "Questo è un evento di progetto. Vuoi aprire il progetto?"
           );
           if (shouldOpenProject) {
-            window.open(`/Progetti?projectId=${event.projectEventData.projectId}`, '_blank');
+            window.open(
+              `/Progetti?projectId=${event.projectEventData.projectId}`,
+              "_blank"
+            );
             return;
           }
         }
         break;
-        
-      case 'note-todo':
+
+      case "note-todo":
         if (event.noteId) {
           const shouldOpenNote = window.confirm(
-            'Questo è un to-do da nota. Vuoi aprire la nota?'
+            "Questo è un to-do da nota. Vuoi aprire la nota?"
           );
           if (shouldOpenNote) {
-            window.open(`/Note?noteId=${event.noteId}`, '_blank');
+            window.open(`/Note?noteId=${event.noteId}`, "_blank");
             return;
           }
         }
         break;
     }
-    
+
     setShowEventDetailsModal(true);
   };
 
   const createEvent = async () => {
     if (!selectedSlot || !eventForm.title.trim()) {
-      setError('Il titolo dell\'evento è obbligatorio');
+      setError("Il titolo dell'evento è obbligatorio");
       return;
     }
 
@@ -524,38 +590,44 @@ const MasterCalendar: React.FC = () => {
         participants: eventForm.participants,
         eventType: eventForm.eventType,
         isRecurring: eventForm.isRecurring,
-        recurrenceRule: eventForm.isRecurring ? eventForm.recurrenceRule : undefined
+        recurrenceRule: eventForm.isRecurring
+          ? eventForm.recurrenceRule
+          : undefined,
       };
 
-      const response = await fetch('/api/events', {
-        method: 'POST',
+      const response = await fetch("/api/events", {
+        method: "POST",
         headers: getAuthHeaders(),
         body: JSON.stringify(newEvent),
       });
 
-      if (!response.ok) throw new Error('Failed to create event');
+      if (!response.ok) throw new Error("Failed to create event");
 
       const result = await response.json();
       const event = result.event || result;
-      
-      setEvents(prev => [...prev, {
-        ...event,
-        start: new Date(event.start),
-        end: new Date(event.end),
-        createdAt: new Date(event.createdAt || Date.now()),
-        updatedAt: new Date(event.updatedAt || Date.now())
-      }]);
+
+      setEvents((prev) => [
+        ...prev,
+        {
+          ...event,
+          start: new Date(event.start),
+          end: new Date(event.end),
+          createdAt: new Date(event.createdAt || Date.now()),
+          updatedAt: new Date(event.updatedAt || Date.now()),
+        },
+      ]);
 
       setShowEventModal(false);
       setError(null);
-      
+
       // Mostra messaggio successo
       if (result.participantsInfo) {
-        alert(`Evento creato con successo! ${result.participantsInfo.eventsCreated} eventi creati.`);
+        alert(
+          `Evento creato con successo! ${result.participantsInfo.eventsCreated} eventi creati.`
+        );
       }
-
     } catch (err) {
-      setError('Errore durante la creazione dell\'evento');
+      setError("Errore durante la creazione dell'evento");
     }
   };
 
@@ -564,7 +636,7 @@ const MasterCalendar: React.FC = () => {
   // =======================
 
   const setupNotifications = () => {
-    if (Notification.permission === 'default') {
+    if (Notification.permission === "default") {
       Notification.requestPermission();
     }
   };
@@ -573,7 +645,11 @@ const MasterCalendar: React.FC = () => {
     const now = new Date();
     filteredEvents.forEach((event) => {
       const diffInMinutes = (event.start.getTime() - now.getTime()) / 60000;
-      if (diffInMinutes <= event.notificationLeadTime && diffInMinutes > 0 && !event.reminderSent) {
+      if (
+        diffInMinutes <= event.notificationLeadTime &&
+        diffInMinutes > 0 &&
+        !event.reminderSent
+      ) {
         sendNotification(event);
         // Marca come inviato (in un'app reale, salveresti nel DB)
         event.reminderSent = true;
@@ -582,11 +658,11 @@ const MasterCalendar: React.FC = () => {
   };
 
   const sendNotification = (event: UnifiedEvent) => {
-    if (Notification.permission === 'granted') {
+    if (Notification.permission === "granted") {
       const icon = getEventIcon(event.eventType);
       new Notification(`${icon} ${event.title}`, {
         body: `Inizia tra ${event.notificationLeadTime} minuti`,
-        icon: '/logo.png',
+        icon: "/logo.png",
       });
     }
   };
@@ -597,46 +673,71 @@ const MasterCalendar: React.FC = () => {
 
   const getEventIcon = (eventType: string) => {
     switch (eventType) {
-      case 'study-cycle': return '📚';
-      case 'project': return '🚀';
-      case 'note-todo': return '📝';
-      case 'recurring': return '🔄';
-      case 'milestone': return '🎯';
-      default: return '📅';
+      case "study-cycle":
+        return "📚";
+      case "project":
+        return "🚀";
+      case "note-todo":
+        return "📝";
+      case "recurring":
+        return "🔄";
+      case "milestone":
+        return "🎯";
+      default:
+        return "📅";
     }
   };
 
   const getEventTypeLabel = (eventType: string) => {
     switch (eventType) {
-      case 'study-cycle': return 'Study Cycle';
-      case 'project': return 'Progetto';
-      case 'note-todo': return 'To-Do Note';
-      case 'recurring': return 'Ricorrente';
-      case 'milestone': return 'Milestone';
-      default: return 'Generale';
+      case "study-cycle":
+        return "Study Cycle";
+      case "project":
+        return "Progetto";
+      case "note-todo":
+        return "To-Do Note";
+      case "recurring":
+        return "Ricorrente";
+      case "milestone":
+        return "Milestone";
+      default:
+        return "Generale";
     }
   };
 
   const getCategoryLabel = (category: string) => {
     switch (category) {
-      case 'work': return '💼 Lavoro';
-      case 'personal': return '👤 Personale';
-      case 'study': return '📖 Studio';
-      case 'meeting': return '🤝 Riunione';
-      case 'reminder': return '⏰ Promemoria';
-      case 'project': return '🚀 Progetto';
-      case 'milestone': return '🎯 Milestone';
-      default: return '📋 Altro';
+      case "work":
+        return "💼 Lavoro";
+      case "personal":
+        return "👤 Personale";
+      case "study":
+        return "📖 Studio";
+      case "meeting":
+        return "🤝 Riunione";
+      case "reminder":
+        return "⏰ Promemoria";
+      case "project":
+        return "🚀 Progetto";
+      case "milestone":
+        return "🎯 Milestone";
+      default:
+        return "📋 Altro";
     }
   };
 
   const getPriorityColor = (priority: string) => {
     switch (priority) {
-      case 'urgent': return '#f44336';
-      case 'high': return '#ff9800';
-      case 'medium': return '#2196f3';
-      case 'low': return '#4caf50';
-      default: return '#9e9e9e';
+      case "urgent":
+        return "#f44336";
+      case "high":
+        return "#ff9800";
+      case "medium":
+        return "#2196f3";
+      case "low":
+        return "#4caf50";
+      default:
+        return "#9e9e9e";
     }
   };
 
@@ -654,16 +755,21 @@ const MasterCalendar: React.FC = () => {
         <Typography variant="h6" gutterBottom>
           🎛️ Filtri Avanzati
         </Typography>
-        
+
         <Divider sx={{ my: 2 }} />
-        
+
         {/* Filtro Tipo Evento */}
         <FormControl fullWidth sx={{ mb: 2 }}>
           <InputLabel>Tipo Evento</InputLabel>
           <Select
             value={filters.eventType}
             label="Tipo Evento"
-            onChange={(e) => setFilters(prev => ({ ...prev, eventType: e.target.value as any }))}
+            onChange={(e) =>
+              setFilters((prev) => ({
+                ...prev,
+                eventType: e.target.value as any,
+              }))
+            }
           >
             <MenuItem value="all">🔍 Tutti</MenuItem>
             <MenuItem value="general">📅 Generale</MenuItem>
@@ -680,7 +786,12 @@ const MasterCalendar: React.FC = () => {
           <Select
             value={filters.category}
             label="Categoria"
-            onChange={(e) => setFilters(prev => ({ ...prev, category: e.target.value as any }))}
+            onChange={(e) =>
+              setFilters((prev) => ({
+                ...prev,
+                category: e.target.value as any,
+              }))
+            }
           >
             <MenuItem value="all">🔍 Tutte</MenuItem>
             <MenuItem value="personal">👤 Personale</MenuItem>
@@ -699,7 +810,12 @@ const MasterCalendar: React.FC = () => {
           <Select
             value={filters.priority}
             label="Priorità"
-            onChange={(e) => setFilters(prev => ({ ...prev, priority: e.target.value as any }))}
+            onChange={(e) =>
+              setFilters((prev) => ({
+                ...prev,
+                priority: e.target.value as any,
+              }))
+            }
           >
             <MenuItem value="all">🔍 Tutte</MenuItem>
             <MenuItem value="urgent">🔴 Urgente</MenuItem>
@@ -714,7 +830,9 @@ const MasterCalendar: React.FC = () => {
           fullWidth
           label="📍 Filtra per Luogo"
           value={filters.location}
-          onChange={(e) => setFilters(prev => ({ ...prev, location: e.target.value }))}
+          onChange={(e) =>
+            setFilters((prev) => ({ ...prev, location: e.target.value }))
+          }
           sx={{ mb: 2 }}
         />
 
@@ -723,39 +841,71 @@ const MasterCalendar: React.FC = () => {
           control={
             <Switch
               checked={filters.showRecurringOnly}
-              onChange={(e) => setFilters(prev => ({ ...prev, showRecurringOnly: e.target.checked }))}
+              onChange={(e) =>
+                setFilters((prev) => ({
+                  ...prev,
+                  showRecurringOnly: e.target.checked,
+                }))
+              }
             />
           }
           label="🔄 Solo Eventi Ricorrenti"
         />
 
         <Divider sx={{ my: 2 }} />
-        
+
         {/* Sync Status */}
         <Typography variant="subtitle2" gutterBottom>
           📡 Stato Sincronizzazione
         </Typography>
-        
+
         <List dense>
           <ListItem>
             <ListItemIcon>
-              {syncStatus.projects ? <SyncIcon className="rotating" /> : <ProjectIcon />}
+              {syncStatus.projects ? (
+                <SyncIcon className="rotating" />
+              ) : (
+                <ProjectIcon />
+              )}
             </ListItemIcon>
-            <ListItemText primary="Progetti" secondary={syncStatus.projects ? 'Sincronizzando...' : 'Sincronizzato'} />
+            <ListItemText
+              primary="Progetti"
+              secondary={
+                syncStatus.projects ? "Sincronizzando..." : "Sincronizzato"
+              }
+            />
           </ListItem>
-          
+
           <ListItem>
             <ListItemIcon>
-              {syncStatus.studyCycles ? <SyncIcon className="rotating" /> : <StudyIcon />}
+              {syncStatus.studyCycles ? (
+                <SyncIcon className="rotating" />
+              ) : (
+                <StudyIcon />
+              )}
             </ListItemIcon>
-            <ListItemText primary="Study Cycles" secondary={syncStatus.studyCycles ? 'Sincronizzando...' : 'Sincronizzato'} />
+            <ListItemText
+              primary="Study Cycles"
+              secondary={
+                syncStatus.studyCycles ? "Sincronizzando..." : "Sincronizzato"
+              }
+            />
           </ListItem>
-          
+
           <ListItem>
             <ListItemIcon>
-              {syncStatus.notes ? <SyncIcon className="rotating" /> : <NoteIcon />}
+              {syncStatus.notes ? (
+                <SyncIcon className="rotating" />
+              ) : (
+                <NoteIcon />
+              )}
             </ListItemIcon>
-            <ListItemText primary="Note" secondary={syncStatus.notes ? 'Sincronizzando...' : 'Sincronizzato'} />
+            <ListItemText
+              primary="Note"
+              secondary={
+                syncStatus.notes ? "Sincronizzando..." : "Sincronizzato"
+              }
+            />
           </ListItem>
         </List>
 
@@ -775,7 +925,7 @@ const MasterCalendar: React.FC = () => {
   const renderSpeedDial = () => (
     <SpeedDial
       ariaLabel="Azioni Rapide"
-      sx={{ position: 'fixed', bottom: 16, right: 16 }}
+      sx={{ position: "fixed", bottom: 16, right: 16 }}
       icon={<AddIcon />}
       open={speedDialOpen}
       onOpen={() => setSpeedDialOpen(true)}
@@ -785,7 +935,10 @@ const MasterCalendar: React.FC = () => {
         icon={<EventIcon />}
         tooltipTitle="Nuovo Evento"
         onClick={() => {
-          setSelectedSlot({ start: new Date(), end: new Date(Date.now() + 3600000) });
+          setSelectedSlot({
+            start: new Date(),
+            end: new Date(Date.now() + 3600000),
+          });
           setShowEventModal(true);
           setSpeedDialOpen(false);
         }}
@@ -794,8 +947,11 @@ const MasterCalendar: React.FC = () => {
         icon={<RepeatIcon />}
         tooltipTitle="Evento Ricorrente"
         onClick={() => {
-          setSelectedSlot({ start: new Date(), end: new Date(Date.now() + 3600000) });
-          setEventForm(prev => ({ ...prev, isRecurring: true }));
+          setSelectedSlot({
+            start: new Date(),
+            end: new Date(Date.now() + 3600000),
+          });
+          setEventForm((prev) => ({ ...prev, isRecurring: true }));
           setShowEventModal(true);
           setSpeedDialOpen(false);
         }}
@@ -804,7 +960,10 @@ const MasterCalendar: React.FC = () => {
         icon={<StudyIcon />}
         tooltipTitle="Study Cycle"
         onClick={() => {
-          setSelectedSlot({ start: new Date(), end: new Date(Date.now() + 3600000) });
+          setSelectedSlot({
+            start: new Date(),
+            end: new Date(Date.now() + 3600000),
+          });
           setShowStudyCycleModal(true);
           setSpeedDialOpen(false);
         }}
@@ -813,7 +972,10 @@ const MasterCalendar: React.FC = () => {
         icon={<ProjectIcon />}
         tooltipTitle="Evento Progetto"
         onClick={() => {
-          setSelectedSlot({ start: new Date(), end: new Date(Date.now() + 3600000) });
+          setSelectedSlot({
+            start: new Date(),
+            end: new Date(Date.now() + 3600000),
+          });
           setShowProjectModal(true);
           setSpeedDialOpen(false);
         }}
@@ -831,7 +993,7 @@ const MasterCalendar: React.FC = () => {
 
   const renderStatsCards = () => {
     if (!statistics) return null;
-    
+
     return (
       <Grid container spacing={2} sx={{ mb: 3 }}>
         <Grid item xs={12} sm={6} md={3}>
@@ -846,7 +1008,7 @@ const MasterCalendar: React.FC = () => {
             </CardContent>
           </Card>
         </Grid>
-        
+
         <Grid item xs={12} sm={6} md={3}>
           <Card>
             <CardContent>
@@ -859,7 +1021,7 @@ const MasterCalendar: React.FC = () => {
             </CardContent>
           </Card>
         </Grid>
-        
+
         <Grid item xs={12} sm={6} md={3}>
           <Card>
             <CardContent>
@@ -872,7 +1034,7 @@ const MasterCalendar: React.FC = () => {
             </CardContent>
           </Card>
         </Grid>
-        
+
         <Grid item xs={12} sm={6} md={3}>
           <Card>
             <CardContent>
@@ -895,17 +1057,33 @@ const MasterCalendar: React.FC = () => {
 
   if (loading) {
     return (
-      <Box sx={{ display: 'flex', justifyContent: 'center', alignItems: 'center', height: '100vh' }}>
-        <LinearProgress sx={{ width: '50%' }} />
+      <Box
+        sx={{
+          display: "flex",
+          justifyContent: "center",
+          alignItems: "center",
+          height: "100vh",
+        }}
+      >
+        <LinearProgress sx={{ width: "50%" }} />
         <Typography sx={{ ml: 2 }}>Caricamento calendario master...</Typography>
       </Box>
     );
   }
 
   return (
-    <Box sx={{ height: '100vh', display: 'flex', flexDirection: 'column' }}>
+    <Box
+      className="master-calendar-container"
+      sx={{ height: "100vh", display: "flex", flexDirection: "column" }}
+    >
       {/* App Bar */}
-      <AppBar position="static" sx={{ backgroundColor: '#1976d2' }}>
+      <AppBar
+        position="static"
+        sx={{
+          background: "linear-gradient(135deg, #374151 0%, #1f2937 100%)",
+          boxShadow: "0 4px 20px rgba(0, 0, 0, 0.3)",
+        }}
+      >
         <Toolbar>
           <IconButton
             edge="start"
@@ -915,33 +1093,55 @@ const MasterCalendar: React.FC = () => {
           >
             <MenuIcon />
           </IconButton>
-          
+
           <Typography variant="h6" component="div" sx={{ flexGrow: 1 }}>
             🗓️ Master Calendar - Unificato
           </Typography>
-          
-          <Badge badgeContent={filteredEvents.length} color="secondary">
+
+          <Badge
+            badgeContent={filteredEvents.length}
+            color="secondary"
+            sx={{ mr: 2 }}
+          >
             <EventIcon />
           </Badge>
-          
+
           <IconButton color="inherit" onClick={() => setShowStatsModal(true)}>
             <StatsIcon />
           </IconButton>
-          
-          <IconButton color="inherit" onClick={() => setShowImportExportModal(true)}>
+
+          <IconButton
+            color="inherit"
+            onClick={() => setShowImportExportModal(true)}
+          >
             <ImportIcon />
           </IconButton>
+
+          {/* Notifications Button */}
+          <Badge
+            badgeContent={notifications.length}
+            color="error"
+            sx={{ ml: 1 }}
+          >
+            <NotificationButton
+              notifications={notifications}
+              onAccept={onAcceptInvitation}
+              onDecline={onDeclineInvitation}
+            />
+          </Badge>
         </Toolbar>
       </AppBar>
 
       {/* Stats Cards */}
-      <Box sx={{ p: 2 }}>
-        {renderStatsCards()}
-      </Box>
+      <Box sx={{ p: 2 }}>{renderStatsCards()}</Box>
 
       {/* Error Alert */}
       {error && (
-        <Alert severity="error" onClose={() => setError(null)} sx={{ mx: 2, mb: 2 }}>
+        <Alert
+          severity="error"
+          onClose={() => setError(null)}
+          sx={{ mx: 2, mb: 2 }}
+        >
           {error}
         </Alert>
       )}
@@ -959,24 +1159,34 @@ const MasterCalendar: React.FC = () => {
           <Grid item>
             <Chip
               label={`Tipo: ${getEventTypeLabel(filters.eventType)}`}
-              onDelete={filters.eventType !== 'all' ? () => setFilters(prev => ({ ...prev, eventType: 'all' })) : undefined}
+              onDelete={
+                filters.eventType !== "all"
+                  ? () => setFilters((prev) => ({ ...prev, eventType: "all" }))
+                  : undefined
+              }
               size="small"
-              color={filters.eventType !== 'all' ? 'primary' : 'default'}
+              color={filters.eventType !== "all" ? "primary" : "default"}
             />
           </Grid>
           <Grid item>
             <Chip
               label={`Categoria: ${getCategoryLabel(filters.category)}`}
-              onDelete={filters.category !== 'all' ? () => setFilters(prev => ({ ...prev, category: 'all' })) : undefined}
+              onDelete={
+                filters.category !== "all"
+                  ? () => setFilters((prev) => ({ ...prev, category: "all" }))
+                  : undefined
+              }
               size="small"
-              color={filters.category !== 'all' ? 'primary' : 'default'}
+              color={filters.category !== "all" ? "primary" : "default"}
             />
           </Grid>
           {filters.showRecurringOnly && (
             <Grid item>
               <Chip
                 label="🔄 Solo Ricorrenti"
-                onDelete={() => setFilters(prev => ({ ...prev, showRecurringOnly: false }))}
+                onDelete={() =>
+                  setFilters((prev) => ({ ...prev, showRecurringOnly: false }))
+                }
                 size="small"
                 color="primary"
               />
@@ -993,48 +1203,66 @@ const MasterCalendar: React.FC = () => {
           startAccessor="start"
           endAccessor="end"
           titleAccessor="title"
-          style={{ height: '100%' }}
+          style={{ height: "100%" }}
           selectable
           onSelectSlot={handleSelectSlot}
           onSelectEvent={handleEventClick}
-          views={['month', 'week', 'day', 'agenda']}
+          views={["month", "week", "day", "agenda"]}
           defaultView="month"
+          popup
+          tooltipAccessor={(event) => event.description || event.title}
           eventPropGetter={(event) => ({
             style: {
               backgroundColor: event.color || getPriorityColor(event.priority),
               borderColor: event.color || getPriorityColor(event.priority),
-              color: 'white',
-              fontWeight: 'bold',
-              borderRadius: '4px',
-              border: `2px solid ${event.color || getPriorityColor(event.priority)}`,
-            }
+              color: "white",
+              fontWeight: "600",
+              borderRadius: "6px",
+              padding: "2px 6px",
+              fontSize: "0.85rem",
+              border: "none",
+            },
+            className: [
+              event.eventType ? `event-${event.eventType}` : "",
+              event.priority ? `priority-${event.priority}` : "",
+            ]
+              .filter(Boolean)
+              .join(" "),
           })}
           formats={{
             eventTimeRangeFormat: ({ start, end }, culture, localizer) => {
-              const fmt = localizer && (localizer as any).format ? (localizer as any).format : undefined;
-              const startStr = fmt ? fmt(start, 'HH:mm', culture) : '';
-              const endStr = fmt ? fmt(end, 'HH:mm', culture) : '';
+              const fmt =
+                localizer && (localizer as any).format
+                  ? (localizer as any).format
+                  : undefined;
+              const startStr = fmt ? fmt(start, "HH:mm", culture) : "";
+              const endStr = fmt ? fmt(end, "HH:mm", culture) : "";
               return `${startStr} - ${endStr}`;
             },
-            dayHeaderFormat: (date: Date, culture?: string, localizer?: any) => {
-              const fmt = localizer && localizer.format ? localizer.format : undefined;
-              return fmt ? fmt(date, 'dddd DD/MM', culture) : '';
+            dayHeaderFormat: (
+              date: Date,
+              culture?: string,
+              localizer?: any
+            ) => {
+              const fmt =
+                localizer && localizer.format ? localizer.format : undefined;
+              return fmt ? fmt(date, "dddd DD/MM", culture) : "";
             },
           }}
           messages={{
-            allDay: 'Tutto il giorno',
-            previous: '← Precedente',
-            next: 'Successivo →',
-            today: 'Oggi',
-            month: 'Mese',
-            week: 'Settimana',
-            day: 'Giorno',
-            agenda: 'Agenda',
-            date: 'Data',
-            time: 'Ora',
-            event: 'Evento',
-            noEventsInRange: 'Nessun evento in questo periodo',
-            showMore: (total) => `+ Altri ${total}`
+            allDay: "Tutto il giorno",
+            previous: "← Precedente",
+            next: "Successivo →",
+            today: "Oggi",
+            month: "Mese",
+            week: "Settimana",
+            day: "Giorno",
+            agenda: "Agenda",
+            date: "Data",
+            time: "Ora",
+            event: "Evento",
+            noEventsInRange: "Nessun evento in questo periodo",
+            showMore: (total) => `+ Altri ${total}`,
           }}
         />
       </Box>
@@ -1046,7 +1274,12 @@ const MasterCalendar: React.FC = () => {
       {renderSpeedDial()}
 
       {/* Modal Evento Base */}
-      <Dialog open={showEventModal} onClose={() => setShowEventModal(false)} maxWidth="md" fullWidth>
+      <Dialog
+        open={showEventModal}
+        onClose={() => setShowEventModal(false)}
+        maxWidth="md"
+        fullWidth
+      >
         <DialogTitle>
           {getEventIcon(eventForm.eventType)} Nuovo Evento
         </DialogTitle>
@@ -1057,11 +1290,13 @@ const MasterCalendar: React.FC = () => {
                 fullWidth
                 label="Titolo Evento"
                 value={eventForm.title}
-                onChange={(e) => setEventForm(prev => ({ ...prev, title: e.target.value }))}
+                onChange={(e) =>
+                  setEventForm((prev) => ({ ...prev, title: e.target.value }))
+                }
                 required
               />
             </Grid>
-            
+
             <Grid item xs={12}>
               <TextField
                 fullWidth
@@ -1069,17 +1304,27 @@ const MasterCalendar: React.FC = () => {
                 rows={3}
                 label="Descrizione"
                 value={eventForm.description}
-                onChange={(e) => setEventForm(prev => ({ ...prev, description: e.target.value }))}
+                onChange={(e) =>
+                  setEventForm((prev) => ({
+                    ...prev,
+                    description: e.target.value,
+                  }))
+                }
               />
             </Grid>
-            
+
             <Grid item xs={6}>
               <FormControl fullWidth>
                 <InputLabel>Categoria</InputLabel>
                 <Select
                   value={eventForm.category}
                   label="Categoria"
-                  onChange={(e) => setEventForm(prev => ({ ...prev, category: e.target.value as any }))}
+                  onChange={(e) =>
+                    setEventForm((prev) => ({
+                      ...prev,
+                      category: e.target.value as any,
+                    }))
+                  }
                 >
                   <MenuItem value="personal">👤 Personale</MenuItem>
                   <MenuItem value="work">💼 Lavoro</MenuItem>
@@ -1091,14 +1336,19 @@ const MasterCalendar: React.FC = () => {
                 </Select>
               </FormControl>
             </Grid>
-            
+
             <Grid item xs={6}>
               <FormControl fullWidth>
                 <InputLabel>Priorità</InputLabel>
                 <Select
                   value={eventForm.priority}
                   label="Priorità"
-                  onChange={(e) => setEventForm(prev => ({ ...prev, priority: e.target.value as any }))}
+                  onChange={(e) =>
+                    setEventForm((prev) => ({
+                      ...prev,
+                      priority: e.target.value as any,
+                    }))
+                  }
                 >
                   <MenuItem value="low">🟢 Bassa</MenuItem>
                   <MenuItem value="medium">🟡 Media</MenuItem>
@@ -1107,38 +1357,53 @@ const MasterCalendar: React.FC = () => {
                 </Select>
               </FormControl>
             </Grid>
-            
+
             <Grid item xs={6}>
               <TextField
                 fullWidth
                 label="📍 Luogo"
                 value={eventForm.location}
-                onChange={(e) => setEventForm(prev => ({ ...prev, location: e.target.value }))}
+                onChange={(e) =>
+                  setEventForm((prev) => ({
+                    ...prev,
+                    location: e.target.value,
+                  }))
+                }
               />
             </Grid>
-            
+
             <Grid item xs={6}>
               <TextField
                 fullWidth
                 type="number"
                 label="⏰ Notifica (minuti prima)"
                 value={eventForm.notificationLeadTime}
-                onChange={(e) => setEventForm(prev => ({ ...prev, notificationLeadTime: parseInt(e.target.value) || 0 }))}
+                onChange={(e) =>
+                  setEventForm((prev) => ({
+                    ...prev,
+                    notificationLeadTime: parseInt(e.target.value) || 0,
+                  }))
+                }
               />
             </Grid>
-            
+
             <Grid item xs={12}>
               <FormControlLabel
                 control={
                   <Switch
                     checked={eventForm.isRecurring}
-                    onChange={(e) => setEventForm(prev => ({ ...prev, isRecurring: e.target.checked }))}
+                    onChange={(e) =>
+                      setEventForm((prev) => ({
+                        ...prev,
+                        isRecurring: e.target.checked,
+                      }))
+                    }
                   />
                 }
                 label="🔄 Evento Ricorrente"
               />
             </Grid>
-            
+
             {eventForm.isRecurring && (
               <>
                 <Grid item xs={6}>
@@ -1147,13 +1412,15 @@ const MasterCalendar: React.FC = () => {
                     <Select
                       value={eventForm.recurrenceRule.frequency}
                       label="Frequenza"
-                      onChange={(e) => setEventForm(prev => ({
-                        ...prev,
-                        recurrenceRule: {
-                          ...prev.recurrenceRule,
-                          frequency: e.target.value as any
-                        }
-                      }))}
+                      onChange={(e) =>
+                        setEventForm((prev) => ({
+                          ...prev,
+                          recurrenceRule: {
+                            ...prev.recurrenceRule,
+                            frequency: e.target.value as any,
+                          },
+                        }))
+                      }
                     >
                       <MenuItem value="daily">📅 Giornaliera</MenuItem>
                       <MenuItem value="weekly">📅 Settimanale</MenuItem>
@@ -1162,20 +1429,22 @@ const MasterCalendar: React.FC = () => {
                     </Select>
                   </FormControl>
                 </Grid>
-                
+
                 <Grid item xs={6}>
                   <TextField
                     fullWidth
                     type="number"
                     label="Intervallo"
                     value={eventForm.recurrenceRule.interval}
-                    onChange={(e) => setEventForm(prev => ({
-                      ...prev,
-                      recurrenceRule: {
-                        ...prev.recurrenceRule,
-                        interval: parseInt(e.target.value) || 1
-                      }
-                    }))}
+                    onChange={(e) =>
+                      setEventForm((prev) => ({
+                        ...prev,
+                        recurrenceRule: {
+                          ...prev.recurrenceRule,
+                          interval: parseInt(e.target.value) || 1,
+                        },
+                      }))
+                    }
                     inputProps={{ min: 1 }}
                   />
                 </Grid>
@@ -1187,21 +1456,30 @@ const MasterCalendar: React.FC = () => {
               <Typography variant="subtitle2" gutterBottom>
                 👥 Partecipanti
               </Typography>
-              <Box sx={{ display: 'flex', gap: 1, mb: 1 }}>
+              <Box sx={{ display: "flex", gap: 1, mb: 1 }}>
                 <TextField
                   fullWidth
                   label="Email partecipante"
                   value={eventForm.participantEmail}
-                  onChange={(e) => setEventForm(prev => ({ ...prev, participantEmail: e.target.value }))}
+                  onChange={(e) =>
+                    setEventForm((prev) => ({
+                      ...prev,
+                      participantEmail: e.target.value,
+                    }))
+                  }
                   onKeyPress={(e) => {
-                    if (e.key === 'Enter') {
+                    if (e.key === "Enter") {
                       e.preventDefault();
                       const email = eventForm.participantEmail.trim();
-                      if (email && email.includes('@') && !eventForm.participants.includes(email)) {
-                        setEventForm(prev => ({
+                      if (
+                        email &&
+                        email.includes("@") &&
+                        !eventForm.participants.includes(email)
+                      ) {
+                        setEventForm((prev) => ({
                           ...prev,
                           participants: [...prev.participants, email],
-                          participantEmail: ''
+                          participantEmail: "",
                         }));
                       }
                     }
@@ -1211,11 +1489,15 @@ const MasterCalendar: React.FC = () => {
                   variant="outlined"
                   onClick={() => {
                     const email = eventForm.participantEmail.trim();
-                    if (email && email.includes('@') && !eventForm.participants.includes(email)) {
-                      setEventForm(prev => ({
+                    if (
+                      email &&
+                      email.includes("@") &&
+                      !eventForm.participants.includes(email)
+                    ) {
+                      setEventForm((prev) => ({
                         ...prev,
                         participants: [...prev.participants, email],
-                        participantEmail: ''
+                        participantEmail: "",
                       }));
                     }
                   }}
@@ -1223,16 +1505,20 @@ const MasterCalendar: React.FC = () => {
                   Aggiungi
                 </Button>
               </Box>
-              
-              <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 1 }}>
+
+              <Box sx={{ display: "flex", flexWrap: "wrap", gap: 1 }}>
                 {eventForm.participants.map((email, index) => (
                   <Chip
                     key={index}
                     label={email}
-                    onDelete={() => setEventForm(prev => ({
-                      ...prev,
-                      participants: prev.participants.filter((_, i) => i !== index)
-                    }))}
+                    onDelete={() =>
+                      setEventForm((prev) => ({
+                        ...prev,
+                        participants: prev.participants.filter(
+                          (_, i) => i !== index
+                        ),
+                      }))
+                    }
                     size="small"
                   />
                 ))}
@@ -1241,9 +1527,7 @@ const MasterCalendar: React.FC = () => {
           </Grid>
         </DialogContent>
         <DialogActions>
-          <Button onClick={() => setShowEventModal(false)}>
-            Annulla
-          </Button>
+          <Button onClick={() => setShowEventModal(false)}>Annulla</Button>
           <Button
             variant="contained"
             onClick={createEvent}
@@ -1255,9 +1539,15 @@ const MasterCalendar: React.FC = () => {
       </Dialog>
 
       {/* Modal Dettagli Evento */}
-      <Dialog open={showEventDetailsModal} onClose={() => setShowEventDetailsModal(false)} maxWidth="md" fullWidth>
+      <Dialog
+        open={showEventDetailsModal}
+        onClose={() => setShowEventDetailsModal(false)}
+        maxWidth="md"
+        fullWidth
+      >
         <DialogTitle>
-          {selectedEvent && getEventIcon(selectedEvent.eventType)} Dettagli Evento
+          {selectedEvent && getEventIcon(selectedEvent.eventType)} Dettagli
+          Evento
         </DialogTitle>
         <DialogContent>
           {selectedEvent && (
@@ -1267,16 +1557,18 @@ const MasterCalendar: React.FC = () => {
                   {selectedEvent.title}
                 </Typography>
               </Grid>
-              
+
               <Grid item xs={6}>
                 <Typography variant="body2" color="textSecondary">
                   📅 Data e Ora
                 </Typography>
                 <Typography variant="body1">
-                  {selectedEvent.start.toLocaleDateString('it-IT')} {selectedEvent.start.toLocaleTimeString('it-IT')} - {selectedEvent.end.toLocaleTimeString('it-IT')}
+                  {selectedEvent.start.toLocaleDateString("it-IT")}{" "}
+                  {selectedEvent.start.toLocaleTimeString("it-IT")} -{" "}
+                  {selectedEvent.end.toLocaleTimeString("it-IT")}
                 </Typography>
               </Grid>
-              
+
               <Grid item xs={6}>
                 <Typography variant="body2" color="textSecondary">
                   🏷️ Tipo
@@ -1285,7 +1577,7 @@ const MasterCalendar: React.FC = () => {
                   {getEventTypeLabel(selectedEvent.eventType)}
                 </Typography>
               </Grid>
-              
+
               <Grid item xs={6}>
                 <Typography variant="body2" color="textSecondary">
                   📂 Categoria
@@ -1294,7 +1586,7 @@ const MasterCalendar: React.FC = () => {
                   {getCategoryLabel(selectedEvent.category)}
                 </Typography>
               </Grid>
-              
+
               <Grid item xs={6}>
                 <Typography variant="body2" color="textSecondary">
                   🎯 Priorità
@@ -1302,10 +1594,13 @@ const MasterCalendar: React.FC = () => {
                 <Chip
                   label={selectedEvent.priority}
                   size="small"
-                  style={{ backgroundColor: getPriorityColor(selectedEvent.priority), color: 'white' }}
+                  style={{
+                    backgroundColor: getPriorityColor(selectedEvent.priority),
+                    color: "white",
+                  }}
                 />
               </Grid>
-              
+
               {selectedEvent.location && (
                 <Grid item xs={12}>
                   <Typography variant="body2" color="textSecondary">
@@ -1316,7 +1611,7 @@ const MasterCalendar: React.FC = () => {
                   </Typography>
                 </Grid>
               )}
-              
+
               {selectedEvent.description && (
                 <Grid item xs={12}>
                   <Typography variant="body2" color="textSecondary">
@@ -1327,31 +1622,39 @@ const MasterCalendar: React.FC = () => {
                   </Typography>
                 </Grid>
               )}
-              
-              {selectedEvent.participants && selectedEvent.participants.length > 0 && (
-                <Grid item xs={12}>
-                  <Typography variant="body2" color="textSecondary">
-                    👥 Partecipanti
-                  </Typography>
-                  <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 1, mt: 1 }}>
-                    {selectedEvent.participants.map((email, index) => (
-                      <Chip key={index} label={email} size="small" />
-                    ))}
-                  </Box>
-                </Grid>
-              )}
-              
+
+              {selectedEvent.participants &&
+                selectedEvent.participants.length > 0 && (
+                  <Grid item xs={12}>
+                    <Typography variant="body2" color="textSecondary">
+                      👥 Partecipanti
+                    </Typography>
+                    <Box
+                      sx={{ display: "flex", flexWrap: "wrap", gap: 1, mt: 1 }}
+                    >
+                      {selectedEvent.participants.map((email, index) => (
+                        <Chip key={index} label={email} size="small" />
+                      ))}
+                    </Box>
+                  </Grid>
+                )}
+
               {selectedEvent.isRecurring && (
                 <Grid item xs={12}>
                   <Typography variant="body2" color="textSecondary">
                     🔄 Ricorrenza
                   </Typography>
                   <Typography variant="body1">
-                    {selectedEvent.recurrenceRule?.frequency === 'daily' && 'Giornaliera'}
-                    {selectedEvent.recurrenceRule?.frequency === 'weekly' && 'Settimanale'}
-                    {selectedEvent.recurrenceRule?.frequency === 'monthly' && 'Mensile'}
-                    {selectedEvent.recurrenceRule?.frequency === 'yearly' && 'Annuale'}
-                    {selectedEvent.recurrenceRule?.interval && selectedEvent.recurrenceRule.interval > 1 && 
+                    {selectedEvent.recurrenceRule?.frequency === "daily" &&
+                      "Giornaliera"}
+                    {selectedEvent.recurrenceRule?.frequency === "weekly" &&
+                      "Settimanale"}
+                    {selectedEvent.recurrenceRule?.frequency === "monthly" &&
+                      "Mensile"}
+                    {selectedEvent.recurrenceRule?.frequency === "yearly" &&
+                      "Annuale"}
+                    {selectedEvent.recurrenceRule?.interval &&
+                      selectedEvent.recurrenceRule.interval > 1 &&
                       ` (ogni ${selectedEvent.recurrenceRule.interval})`}
                   </Typography>
                 </Grid>
@@ -1377,17 +1680,20 @@ const MasterCalendar: React.FC = () => {
           open={showImportExportModal}
           onClose={() => setShowImportExportModal(false)}
           onEventsImported={(importedEvents) => {
-            setEvents(prev => [...prev, ...importedEvents]);
+            setEvents((prev) => [...prev, ...importedEvents]);
             setShowImportExportModal(false);
           }}
         />
       )}
 
       {/* Modal Statistiche */}
-      <Dialog open={showStatsModal} onClose={() => setShowStatsModal(false)} maxWidth="lg" fullWidth>
-        <DialogTitle>
-          📊 Statistiche Calendario Master
-        </DialogTitle>
+      <Dialog
+        open={showStatsModal}
+        onClose={() => setShowStatsModal(false)}
+        maxWidth="lg"
+        fullWidth
+      >
+        <DialogTitle>📊 Statistiche Calendario Master</DialogTitle>
         <DialogContent>
           {statistics && (
             <Grid container spacing={3}>
@@ -1399,25 +1705,40 @@ const MasterCalendar: React.FC = () => {
                     </Typography>
                     <List dense>
                       <ListItem>
-                        <ListItemText primary="Eventi Totali" secondary={statistics.totalEvents} />
+                        <ListItemText
+                          primary="Eventi Totali"
+                          secondary={statistics.totalEvents}
+                        />
                       </ListItem>
                       <ListItem>
-                        <ListItemText primary="Eventi Ricorrenti" secondary={statistics.recurringEvents} />
+                        <ListItemText
+                          primary="Eventi Ricorrenti"
+                          secondary={statistics.recurringEvents}
+                        />
                       </ListItem>
                       <ListItem>
-                        <ListItemText primary="Eventi Progetto" secondary={statistics.projectEvents} />
+                        <ListItemText
+                          primary="Eventi Progetto"
+                          secondary={statistics.projectEvents}
+                        />
                       </ListItem>
                       <ListItem>
-                        <ListItemText primary="Study Cycles" secondary={statistics.studyCycleEvents} />
+                        <ListItemText
+                          primary="Study Cycles"
+                          secondary={statistics.studyCycleEvents}
+                        />
                       </ListItem>
                       <ListItem>
-                        <ListItemText primary="To-Do da Note" secondary={statistics.noteEvents} />
+                        <ListItemText
+                          primary="To-Do da Note"
+                          secondary={statistics.noteEvents}
+                        />
                       </ListItem>
                     </List>
                   </CardContent>
                 </Card>
               </Grid>
-              
+
               <Grid item xs={12} md={6}>
                 <Card>
                   <CardContent>
@@ -1426,16 +1747,22 @@ const MasterCalendar: React.FC = () => {
                     </Typography>
                     <List dense>
                       <ListItem>
-                        <ListItemText primary="Questo Mese" secondary={statistics.eventsThisMonth} />
+                        <ListItemText
+                          primary="Questo Mese"
+                          secondary={statistics.eventsThisMonth}
+                        />
                       </ListItem>
                       <ListItem>
-                        <ListItemText primary="Questa Settimana" secondary={statistics.eventsThisWeek} />
+                        <ListItemText
+                          primary="Questa Settimana"
+                          secondary={statistics.eventsThisWeek}
+                        />
                       </ListItem>
                     </List>
                   </CardContent>
                 </Card>
               </Grid>
-              
+
               <Grid item xs={12} md={6}>
                 <Card>
                   <CardContent>
@@ -1445,9 +1772,9 @@ const MasterCalendar: React.FC = () => {
                     <List dense>
                       {statistics.eventsByCategory.map((cat, index) => (
                         <ListItem key={index}>
-                          <ListItemText 
-                            primary={getCategoryLabel(cat._id)} 
-                            secondary={cat.count} 
+                          <ListItemText
+                            primary={getCategoryLabel(cat._id)}
+                            secondary={cat.count}
                           />
                         </ListItem>
                       ))}
@@ -1455,7 +1782,7 @@ const MasterCalendar: React.FC = () => {
                   </CardContent>
                 </Card>
               </Grid>
-              
+
               <Grid item xs={12} md={6}>
                 <Card>
                   <CardContent>
@@ -1465,13 +1792,16 @@ const MasterCalendar: React.FC = () => {
                     <List dense>
                       {statistics.eventsByPriority.map((pri, index) => (
                         <ListItem key={index}>
-                          <ListItemText 
-                            primary={pri._id} 
-                            secondary={pri.count} 
+                          <ListItemText
+                            primary={pri._id}
+                            secondary={pri.count}
                           />
                           <Chip
                             size="small"
-                            style={{ backgroundColor: getPriorityColor(pri._id), color: 'white' }}
+                            style={{
+                              backgroundColor: getPriorityColor(pri._id),
+                              color: "white",
+                            }}
                             label={pri.count}
                           />
                         </ListItem>
@@ -1484,13 +1814,11 @@ const MasterCalendar: React.FC = () => {
           )}
         </DialogContent>
         <DialogActions>
-          <Button onClick={() => setShowStatsModal(false)}>
-            Chiudi
-          </Button>
+          <Button onClick={() => setShowStatsModal(false)}>Chiudi</Button>
         </DialogActions>
       </Dialog>
     </Box>
   );
 };
 
-export default MasterCalendar; 
+export default MasterCalendar;

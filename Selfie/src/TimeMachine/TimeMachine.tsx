@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from "react";
 import "./TimeMachine.css";
 import { getTime, setTime, resetTime, advanceTime } from "./TimeMachineService";
+import { AccessTime as TimeMachineIcon } from "@mui/icons-material";
 
 const TimeMachineComponent: React.FC = () => {
   const [virtualTime, setVirtualTime] = useState<Date>(new Date());
@@ -70,9 +71,9 @@ const TimeMachineComponent: React.FC = () => {
     <>
       <button
         className="time-machine-button"
-        onClick={() => setIsOpen(!isOpen)} // Gestione apertura e chiusura
+        onClick={() => setIsOpen(!isOpen)}
       >
-        Time Machine
+        <TimeMachineIcon sx={{ fontSize: 24, color: "white" }} />
       </button>
 
       <div className={`time-machine-container ${isOpen ? "open" : ""}`}>

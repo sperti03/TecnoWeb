@@ -4,7 +4,7 @@
   --notification-border: rgba(102, 126, 234, 0.2);
   --notification-shadow: 0 8px 32px rgba(0, 0, 0, 0.12);
   --notification-shadow-hover: 0 16px 64px rgba(0, 0, 0, 0.18);
-  --accent-gradient: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  --accent-gradient: linear-gradient(135deg, #374151 0%, #4b5563 100%);
   --success-gradient: linear-gradient(135deg, #4ecdc4 0%, #44a08d 100%);
   --danger-gradient: linear-gradient(135deg, #ff6b6b 0%, #ee5a52 100%);
   --text-primary: #2c3e50;
@@ -39,7 +39,7 @@
   margin: 0;
   font-size: 1.1rem;
   font-weight: 600;
-  color: #667eea;
+  color: #9ca3af;
 }
 
 .notification-icon {
@@ -150,7 +150,7 @@
 .notification-title {
   font-size: 1rem;
   font-weight: 600;
-  color: #667eea;
+  color: #9ca3af;
   margin: 0;
 }
 
@@ -190,7 +190,7 @@
 }
 
 .sender-name {
-  color: #667eea;
+  color: #9ca3af;
   font-weight: 700;
   font-size: 1rem;
 }

@@ -53,11 +53,15 @@ const Signup: React.FC<SignupProps> = ({ switchToLogin }) => {
           if (decoded && decoded.userId) {
             localStorage.setItem("userId", decoded.userId);
           }
+          const decodedAny: any = decoded as any;
+          if (decodedAny && decodedAny.username) {
+            localStorage.setItem("username", decodedAny.username);
+          }
         } catch (e) {
           console.error("Errore nella decodifica del token per userId", e);
         }
         setError("");
-        navigate("/HomePage");
+        navigate("/Homepage");
       } else {
         const errorMessage = await response.text();
         console.error("Signup failed:", errorMessage);

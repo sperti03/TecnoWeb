@@ -6,7 +6,7 @@ import jwt from 'jsonwebtoken';
 import cors from 'cors';
 import mongoose from 'mongoose';
 import dotenv from 'dotenv';
-import nodemailer from 'nodemailer';
+import EmailService from './EmailService.js';
 import cron from 'node-cron';
 import User from './UserModel.js';
 dotenv.config();
@@ -34,16 +34,7 @@ CalendarRoutes.use(cors());
 CalendarRoutes.use(express.json());
 
 
-// Connessione a MongoDB
-const mongoUri = process.env.MONGO_URI;
-mongoose.connect(mongoUri, {
-})
-  .then(() => {
-    console.log('Connected to MongoDB, calendar');
-  })
-  .catch(err => {
-    console.error('Failed to connect to MongoDB', err);
-  });
+// Connessione MongoDB centralizzata in index.js
 
 
 // Middleware per verificare il token JWT
@@ -54,7 +45,7 @@ const verifyToken = (req, res, next) => {
     return res.status(403).send('Token mancante');
   }
 
-  jwt.verify(token, 'tuasecretkey', (err, decoded) => {
+  jwt.verify(token, process.env.JWT_SECRET || 'tuasecretkey', (err, decoded) => {
     if (err) {
       return res.status(401).send('Token non valido');
     }
@@ -194,41 +185,24 @@ CalendarRoutes.post('/api/events', verifyToken, async (req, res) => {
     const emailsNotFound = [];
     
     if (participantsWithIds && participantsWithIds.length > 0) {
-      try {
-        const transporter = nodemailer.createTransporter({
-          service: 'gmail',
-          auth: {
-            user: process.env.EMAIL_USER,
-            pass: process.env.EMAIL_PASS,
-          },
-        });
-        
-        for (const p of participantsWithIds) {
-          if (p.userId) {
-            await transporter.sendMail({
-              from: process.env.EMAIL_USER,
-              to: p.email,
-              subject: `📅 Invito a evento: ${title}`,
-              html: `
-                <h2>🎉 Sei stato invitato a un evento!</h2>
-                <p><strong>Evento:</strong> ${title}</p>
-                <p><strong>Descrizione:</strong> ${description || 'Nessuna descrizione'}</p>
-                <p><strong>Data:</strong> ${new Date(start).toLocaleDateString('it-IT')}</p>
-                <p><strong>Orario:</strong> ${new Date(start).toLocaleTimeString('it-IT')} - ${new Date(end).toLocaleTimeString('it-IT')}</p>
-                ${location ? `<p><strong>Luogo:</strong> ${location}</p>` : ''}
-                <p>L'evento è stato aggiunto automaticamente al tuo calendario Selfie.</p>
-                <p>Accedi alla piattaforma per vedere tutti i dettagli.</p>
-              `,
-            });
+      for (const p of participantsWithIds) {
+        if (p.userId) {
+          const result = await EmailService.sendEventInvitationEmail({
+            to: p.email,
+            title,
+            description,
+            start,
+            end,
+            location,
+          });
+          if (result.success) {
             emailsSent.push(p.email);
-            console.log(`Email sent to: ${p.email}`);
           } else {
-            emailsNotFound.push(p.email);
-            console.log(`User not found for email: ${p.email}`);
+            console.error('Failed to send email to', p.email, result.error);
           }
+        } else {
+          emailsNotFound.push(p.email);
         }
-      } catch (emailError) {
-        console.error('Error sending emails:', emailError);
       }
     }
 
@@ -843,39 +817,24 @@ CalendarRoutes.post('/recurring', verifyToken, async (req, res) => {
 
     // Invio email ai partecipanti esistenti
     if (participantsWithIds && participantsWithIds.length > 0) {
-      try {
-        const transporter = nodemailer.createTransporter({
-          service: 'gmail',
-          auth: {
-            user: process.env.EMAIL_USER,
-            pass: process.env.EMAIL_PASS,
-          },
-        });
-        
-        for (const p of participantsWithIds) {
-          if (p.userId) {
-            await transporter.sendMail({
-              from: process.env.EMAIL_USER,
-              to: p.email,
-              subject: `📅 Invito a evento ricorrente: ${title}`,
-              html: `
-                <h2>🔄 Sei stato invitato a un evento ricorrente!</h2>
-                <p><strong>Evento:</strong> ${title}</p>
-                <p><strong>Descrizione:</strong> ${description || 'Nessuna descrizione'}</p>
-                <p><strong>Ricorrenza:</strong> ${recurrenceRule.frequency}</p>
-                <p><strong>Prima data:</strong> ${new Date(start).toLocaleDateString('it-IT')}</p>
-                <p><strong>Orario:</strong> ${new Date(start).toLocaleTimeString('it-IT')} - ${new Date(end).toLocaleTimeString('it-IT')}</p>
-                ${location ? `<p><strong>Luogo:</strong> ${location}</p>` : ''}
-                <p>Gli eventi sono stati aggiunti automaticamente al tuo calendario Selfie.</p>
-              `,
-            });
+      for (const p of participantsWithIds) {
+        if (p.userId) {
+          const result = await EmailService.sendEventInvitationEmail({
+            to: p.email,
+            title,
+            description,
+            start,
+            end,
+            location,
+          });
+          if (result.success) {
             emailsSent.push(p.email);
           } else {
-            emailsNotFound.push(p.email);
+            console.error('Failed to send email to', p.email, result.error);
           }
+        } else {
+          emailsNotFound.push(p.email);
         }
-      } catch (emailError) {
-        console.error('Error sending emails for recurring event:', emailError);
       }
     }
 
@@ -1078,20 +1037,11 @@ const sendReminders = async () => {
     if (!event.participants || event.participants.length === 0) continue;
     const diffInMinutes = (new Date(event.start).getTime() - now.getTime()) / 60000;
     if (diffInMinutes <= event.notificationLeadTime && diffInMinutes > 0 && !event.reminderSent) {
-      // Invia mail a tutti i partecipanti
-      const transporter = nodemailer.createTransporter({
-        service: 'gmail',
-        auth: {
-          user: process.env.EMAIL_USER,
-          pass: process.env.EMAIL_PASS,
-        },
-      });
       for (const p of event.participants) {
-        await transporter.sendMail({
-          from: process.env.EMAIL_USER,
+        await EmailService.sendEventReminderEmail({
           to: p.email,
-          subject: `Reminder evento: ${event.title}`,
-          text: `L'evento "${event.title}" inizierà alle ${event.start}.`,
+          title: event.title,
+          start: event.start,
         });
       }
       event.reminderSent = true;

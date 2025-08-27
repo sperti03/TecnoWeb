@@ -9,6 +9,7 @@ import {
 import { useEffect, useState } from "react";
 
 import "./App.css";
+import "./theme.css";
 import AuthPage from "./Authentication/AuthPage";
 import HomePage from "./Homepage/HomePage";
 import NoteHome from "./Note/NoteHome";
@@ -17,10 +18,10 @@ import CalendarHome from "./calendar/Calendar";
 import MasterCalendar from "./calendar/MasterCalendar";
 import Pomodoro from "./Pomodoro/pomodoro";
 import ProjectHome from "./Progetti/ProjectHome.js";
-import UnifiedCalendar from './calendar/UnifiedCalendar';
-import AdvancedCalendar from './calendar/AdvancedCalendar';
-import CalendarDashboard from './calendar/CalendarDashboard';
-import StudyCycleManager from './StudyCycle/StudyCycleManager';
+import UnifiedCalendar from "./calendar/UnifiedCalendar";
+import AdvancedCalendar from "./calendar/AdvancedCalendar";
+import CalendarDashboard from "./calendar/CalendarDashboard";
+import StudyCycleManager from "./StudyCycle/StudyCycleManager";
 import { NotificationService } from "./services/NotificationService";
 import { StudyCycleAutoService } from "./services/StudyCycleAutoService";
 
@@ -88,13 +89,13 @@ function Layout() {
       try {
         // Request notification permission
         await StudyCycleAutoService.requestNotificationPermission();
-        
+
         // Initialize daily auto-reschedule system
         StudyCycleAutoService.initializeAutoReschedule();
-        
-        console.log('🕰️ Study Cycle auto-reschedule system initialized');
+
+        console.log("🕰️ Study Cycle auto-reschedule system initialized");
       } catch (error) {
-        console.error('Error initializing auto-reschedule system:', error);
+        console.error("Error initializing auto-reschedule system:", error);
       }
     };
 
@@ -105,7 +106,9 @@ function Layout() {
       try {
         const result = await StudyCycleAutoService.autoRescheduleIncomplete();
         if (result.success && result.count > 0) {
-          console.log(`✅ Auto-rescheduled ${result.count} incomplete study cycles to today`);
+          console.log(
+            `✅ Auto-rescheduled ${result.count} incomplete study cycles to today`
+          );
         }
       } catch (error) {
         console.error("Error checking incomplete cycles:", error);
@@ -170,7 +173,8 @@ function Layout() {
 
   return (
     <>
-      {location.pathname !== "/auth" && <TimeMachineComponent />}
+      {location.pathname !== "/auth" &&
+        location.pathname !== "/time-machine" && <TimeMachineComponent />}
       <Routes>
         <Route path="/" element={<Navigate to="/auth" />} />
         <Route path="/auth" element={<AuthPage />} />
@@ -185,12 +189,66 @@ function Layout() {
           }
         />
         <Route path="/Note" element={<NoteHome />} />
-                  <Route path="/CalendarHome" element={<MasterCalendar />} />
-          <Route path="/calendar" element={<MasterCalendar />} />
-          <Route path="/calendario-unificato" element={<MasterCalendar />} />
-          <Route path="/calendario-avanzato" element={<MasterCalendar />} />
-          <Route path="/calendario-dashboard" element={<MasterCalendar />} />
-          <Route path="/master-calendar" element={<MasterCalendar />} />
+        <Route
+          path="/CalendarHome"
+          element={
+            <MasterCalendar
+              notifications={notifications}
+              onAcceptInvitation={handleAcceptInvitation}
+              onDeclineInvitation={handleDeclineInvitation}
+            />
+          }
+        />
+        <Route
+          path="/calendar"
+          element={
+            <MasterCalendar
+              notifications={notifications}
+              onAcceptInvitation={handleAcceptInvitation}
+              onDeclineInvitation={handleDeclineInvitation}
+            />
+          }
+        />
+        <Route
+          path="/calendario-unificato"
+          element={
+            <MasterCalendar
+              notifications={notifications}
+              onAcceptInvitation={handleAcceptInvitation}
+              onDeclineInvitation={handleDeclineInvitation}
+            />
+          }
+        />
+        <Route
+          path="/calendario-avanzato"
+          element={
+            <MasterCalendar
+              notifications={notifications}
+              onAcceptInvitation={handleAcceptInvitation}
+              onDeclineInvitation={handleDeclineInvitation}
+            />
+          }
+        />
+        <Route
+          path="/calendario-dashboard"
+          element={
+            <MasterCalendar
+              notifications={notifications}
+              onAcceptInvitation={handleAcceptInvitation}
+              onDeclineInvitation={handleDeclineInvitation}
+            />
+          }
+        />
+        <Route
+          path="/master-calendar"
+          element={
+            <MasterCalendar
+              notifications={notifications}
+              onAcceptInvitation={handleAcceptInvitation}
+              onDeclineInvitation={handleDeclineInvitation}
+            />
+          }
+        />
         <Route path="/Pomodoro" element={<Pomodoro />} />
         <Route path="/Projects" element={<ProjectHome />} />
         <Route path="/progetti" element={<ProjectHome />} />

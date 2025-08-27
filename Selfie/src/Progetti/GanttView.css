@@ -2,9 +2,10 @@
 
 .gantt-view {
   width: 100%;
-  background: white;
+  background: var(--surface-color);
   border-radius: var(--border-radius);
   box-shadow: var(--box-shadow);
+  border: 1px solid var(--border-color);
   overflow: hidden;
 }
 
@@ -16,8 +17,9 @@
 
 .gantt-controls {
   padding: 20px;
-  border-bottom: 1px solid #e9ecef;
-  background: #f8f9fa;
+  border-bottom: 1px solid var(--border-color);
+  background: var(--panel-color);
+  color: var(--text-color);
 }
 
 .scale-controls {
@@ -35,8 +37,9 @@
 .gantt-sidebar {
   min-width: 250px;
   max-width: 300px;
-  background: #f8f9fa;
-  border-right: 1px solid #e9ecef;
+  background: var(--panel-color);
+  color: var(--text-color);
+  border-right: 1px solid var(--border-color);
   overflow-y: auto;
   flex-shrink: 0;
 }
@@ -44,9 +47,9 @@
 .gantt-header {
   padding: 16px 20px;
   font-weight: 600;
-  color: var(--dark-color);
-  background: #e9ecef;
-  border-bottom: 1px solid #dee2e6;
+  color: var(--text-color);
+  background: linear-gradient(135deg, #374151 0%, #1f2937 100%);
+  border-bottom: 1px solid var(--border-color);
   position: sticky;
   top: 0;
   z-index: 10;
@@ -54,7 +57,7 @@
 
 .gantt-row-label {
   padding: 12px 20px;
-  border-bottom: 1px solid #e9ecef;
+  border-bottom: 1px solid var(--border-color);
   min-height: 48px;
   display: flex;
   flex-direction: column;
@@ -63,22 +66,22 @@
 }
 
 .gantt-row-label:hover {
-  background-color: #f1f3f4;
+  background-color: rgba(255, 255, 255, 0.06);
 }
 
 .gantt-row-label.level-0 {
-  background-color: #e3f2fd;
+  background-color: rgba(59, 130, 246, 0.1);
   font-weight: 600;
-  color: var(--dark-color);
+  color: var(--text-color);
 }
 
 .gantt-row-label.level-1 {
   padding-left: 40px;
-  background-color: white;
+  background-color: var(--surface-color);
 }
 
 .gantt-row-label.phase {
-  background-color: #e8f5e8;
+  background-color: rgba(16, 185, 129, 0.12);
   font-weight: 600;
 }
 
@@ -102,8 +105,8 @@
 
 .actor-more {
   font-size: 11px;
-  color: var(--secondary-color);
-  background-color: #e9ecef;
+  color: var(--muted-text);
+  background-color: rgba(255, 255, 255, 0.06);
   padding: 2px 6px;
   border-radius: 8px;
 }
@@ -116,8 +119,9 @@
 
 .gantt-timeline-header {
   display: flex;
-  background: #e9ecef;
-  border-bottom: 1px solid #dee2e6;
+  background: linear-gradient(135deg, #374151 0%, #1f2937 100%);
+  color: var(--text-color);
+  border-bottom: 1px solid var(--border-color);
   position: sticky;
   top: 0;
   z-index: 10;
@@ -127,11 +131,11 @@
 .timeline-unit {
   min-width: 60px;
   padding: 12px 8px;
-  border-right: 1px solid #dee2e6;
+  border-right: 1px solid var(--border-color);
   text-align: center;
   font-size: 12px;
   font-weight: 600;
-  color: var(--dark-color);
+  color: var(--text-color);
   white-space: nowrap;
   display: flex;
   align-items: center;
@@ -145,14 +149,14 @@
 
 .gantt-row {
   height: 48px;
-  border-bottom: 1px solid #e9ecef;
+  border-bottom: 1px solid var(--border-color);
   position: relative;
   display: flex;
   align-items: center;
 }
 
 .gantt-row:hover {
-  background-color: #f8f9fa;
+  background-color: rgba(255, 255, 255, 0.04);
 }
 
 .gantt-row.phase {
@@ -221,8 +225,9 @@
 
 .gantt-legend {
   padding: 16px 20px;
-  background: #f8f9fa;
-  border-top: 1px solid #e9ecef;
+  background: var(--panel-color);
+  border-top: 1px solid var(--border-color);
+  color: var(--text-color);
   display: flex;
   flex-wrap: wrap;
   gap: 20px;
@@ -235,7 +240,7 @@
   align-items: center;
   gap: 8px;
   font-size: 12px;
-  color: var(--secondary-color);
+  color: var(--muted-text);
 }
 
 .legend-color {
@@ -358,7 +363,7 @@
     max-width: none;
     max-height: 200px;
     border-right: none;
-    border-bottom: 1px solid #e9ecef;
+    border-bottom: 1px solid var(--border-color);
   }
   
   .gantt-timeline {

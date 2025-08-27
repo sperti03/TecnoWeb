@@ -4,7 +4,7 @@
   left: 0;
   width: 100%;
   height: 100%;
-  background: rgba(0, 0, 0, 0.4);
+  background: rgba(0, 0, 0, 0.55);
   z-index: 999;
   display: flex;
   justify-content: center;
@@ -12,34 +12,42 @@
   animation: fadeIn 0.25s ease-in;
 }
 
-.profile-modal {
-  background: #fff;
+.profile-modal-overlay .profile-modal {
+  background: linear-gradient(135deg, #374151 0%, #1f2937 100%) !important;
+  background-color: var(--surface-color) !important;
+  color: var(--text-color) !important;
   border-radius: 12px;
-  width: 90%;
-  max-width: 500px;
-  padding: 2rem;
-  box-shadow: 0 12px 32px rgba(0, 0, 0, 0.25);
+  width: clamp(360px, 92vw, 560px);
+  padding: 1.5rem;
+  border: 1px solid var(--border-color) !important;
+  box-shadow: 0 20px 40px rgba(0, 0, 0, 0.55);
   position: relative;
   animation: slideUp 0.3s ease-out;
 }
 
-.close-button {
+.profile-modal .close-button {
   position: absolute;
-  right: 16px;
-  top: 12px;
-  background: none;
+  right: 12px;
+  top: 10px;
+  background: transparent !important;
   border: none;
-  font-size: 1.8rem;
-  color: #666;
+  font-size: 1.6rem;
+  color: var(--muted-text) !important;
   cursor: pointer;
+  border-radius: 8px;
+  transition: all 0.2s ease;
+}
+.profile-modal .close-button:hover {
+  color: var(--text-color);
+  background: rgba(255, 255, 255, 0.06);
 }
 
 h2 {
   margin-top: 0;
-  margin-bottom: 1.5rem;
-  font-size: 1.4rem;
+  margin-bottom: 1rem;
+  font-size: 1.25rem;
   text-align: center;
-  color: #222;
+  color: var(--text-color);
 }
 
 .alert {
@@ -47,16 +55,19 @@ h2 {
   border-radius: 8px;
   font-size: 0.95rem;
   margin-bottom: 1rem;
+  border: 1px solid var(--border-color);
 }
 
 .alert.success {
-  background: #d1e7dd;
-  color: #0f5132;
+  background: rgba(16, 185, 129, 0.12);
+  color: #86efac;
+  border-color: rgba(16, 185, 129, 0.35);
 }
 
 .alert.error {
-  background: #f8d7da;
-  color: #842029;
+  background: rgba(239, 68, 68, 0.12);
+  color: #fca5a5;
+  border-color: rgba(239, 68, 68, 0.35);
 }
 
 .image-container {
@@ -69,25 +80,36 @@ h2 {
   height: 100px;
   border-radius: 50%;
   object-fit: cover;
-  border: 2px solid #ccc;
+  border: 2px solid var(--border-color);
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.35);
 }
 
-.form label {
+.profile-modal .form label {
   display: block;
   margin-bottom: 1rem;
-  color: #444;
+  color: var(--muted-text);
   font-weight: 600;
 }
 
-input[type="text"],
-input[type="email"],
-input[type="file"] {
+.profile-modal input[type="text"],
+.profile-modal input[type="email"],
+.profile-modal input[type="file"] {
   width: 100%;
-  padding: 0.6rem;
+  padding: 0.7rem 0.85rem;
   margin-top: 0.4rem;
-  border: 1px solid #ccc;
+  border: 1px solid var(--border-color) !important;
   border-radius: 8px;
   font-size: 1rem;
+  background: rgba(255, 255, 255, 0.05) !important;
+  color: var(--text-color) !important;
+  box-shadow: inset 0 1px 0 rgba(255,255,255,0.06);
+}
+.profile-modal input[type="text"]:focus,
+.profile-modal input[type="email"]:focus,
+.profile-modal input[type="file"]:focus {
+  outline: none;
+  border-color: var(--primary-color);
+  box-shadow: 0 0 0 3px rgba(59,130,246,0.25);
 }
 
 .actions {
@@ -95,37 +117,41 @@ input[type="file"] {
   justify-content: flex-end;
   gap: 0.75rem;
   margin-top: 1.5rem;
+  border-top: 1px solid var(--border-color);
+  padding-top: 1rem;
 }
 
-.btn {
+.profile-modal .btn {
   padding: 0.6rem 1.2rem;
   font-size: 1rem;
-  border: 1px solid #ccc;
+  border: 1px solid var(--border-color) !important;
   border-radius: 8px;
   cursor: pointer;
-  background: #f1f3f5;
-  color: #333;
+  background: #2a3441 !important;
+  color: var(--text-color) !important;
   transition: all 0.2s ease-in-out;
+  box-shadow: 0 2px 8px rgba(0,0,0,0.25);
 }
 
-.btn:hover {
-  background: #e9ecef;
+.profile-modal .btn:hover {
+  background: #3a4554;
 }
 
-.btn.primary {
-  background: #007bff;
-  border-color: #007bff;
-  color: white;
+.profile-modal .btn.primary {
+  background: #1f2937;
+  border-color: #1f2937;
+  color: #fff;
+  box-shadow: 0 6px 18px rgba(31,41,55,0.45);
 }
 
-.btn.primary:hover {
-  background: #0056b3;
+.profile-modal .btn.primary:hover {
+  background: #374151;
 }
 
 .info > div {
   margin-bottom: 1rem;
   font-size: 1.05rem;
-  color: #333;
+  color: var(--text-color);
 }
 
 @keyframes fadeIn {

@@ -89,7 +89,7 @@
 }
 
 .invitation-card {
-  border-left: 4px solid #2196f3;
+  border-left: 4px solid var(--primary-color);
   background: linear-gradient(135deg, #e3f2fd 0%, #f3e5f5 100%);
   transition: all 0.3s ease;
 }
@@ -103,7 +103,7 @@
   text-align: center;
   padding: 24px;
   border-radius: 16px;
-  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  background: linear-gradient(135deg, #374151 0%, #4b5563 100%);
   color: white;
   box-shadow: 0 4px 15px rgba(102, 126, 234, 0.4);
 }
@@ -141,7 +141,7 @@
   font-family: 'Roboto Mono', monospace;
   font-size: 2.5rem;
   font-weight: bold;
-  color: #2196f3;
+  color: var(--primary-color);
   text-align: center;
   background: linear-gradient(135deg, #f5f5f5 0%, #e0e0e0 100%);
   padding: 20px;
@@ -198,12 +198,12 @@
 .empty-state {
   text-align: center;
   padding: 48px 24px;
-  color: #757575;
+  color: var(--muted-text);
 }
 
 .empty-state-icon {
   font-size: 4rem;
-  color: #bdbdbd;
+  color: var(--muted-text-weak);
   margin-bottom: 16px;
 }
 
@@ -215,13 +215,13 @@
 .form-section {
   margin-bottom: 24px;
   padding: 16px;
-  background: #f8f9fa;
+  background: var(--panel-color);
   border-radius: 8px;
-  border-left: 4px solid #2196f3;
+  border-left: 4px solid var(--primary-color);
 }
 
 .form-section-title {
-  color: #2196f3;
+  color: var(--primary-color);
   font-weight: 600;
   margin-bottom: 12px;
 }
@@ -231,6 +231,6 @@
   padding: 8px 12px;
   border-radius: 20px;
   font-weight: 500;
-  color: #1976d2;
-  border: 1px solid #bbdefb;
+  color: var(--primary-700);
+  border: 1px solid var(--primary-200);
 } 

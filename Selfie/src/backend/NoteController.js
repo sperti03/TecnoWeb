@@ -32,16 +32,7 @@ const noteRoutes = express.Router();
 noteRoutes.use(cors());
 noteRoutes.use(express.json());
 
-// Connessione a MongoDB
-const mongoUri = process.env.MONGO_URI;
-mongoose.connect(mongoUri, {
-})
-  .then(() => {
-    console.log('Connected to MongoDB, note');
-  })
-  .catch(err => {
-    console.error('Failed to connect to MongoDB', err);
-  });
+// Connessione MongoDB centralizzata in index.js
 
 
 // Middleware per verificare il token JWT
@@ -52,7 +43,7 @@ const verifyToken = (req, res, next) => {
     return res.status(403).send('Token mancante');
   }
 
-  jwt.verify(token, 'tuasecretkey', (err, decoded) => {
+  jwt.verify(token, process.env.JWT_SECRET || 'tuasecretkey', (err, decoded) => {
     if (err) {
       return res.status(401).send('Token non valido');
     }

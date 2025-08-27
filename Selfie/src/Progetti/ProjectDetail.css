@@ -7,10 +7,11 @@
 }
 
 .project-detail-header {
-  background: white;
+  background: var(--surface-color);
   padding: 30px;
   border-radius: var(--border-radius);
   box-shadow: var(--box-shadow);
+  border: 1px solid var(--border-color);
   margin-bottom: 30px;
   display: flex;
   justify-content: space-between;
@@ -47,10 +48,11 @@
 }
 
 .view-controls {
-  background: white;
+  background: var(--surface-color);
   padding: 20px;
   border-radius: var(--border-radius);
   box-shadow: var(--box-shadow);
+  border: 1px solid var(--border-color);
   margin-bottom: 24px;
   display: flex;
   justify-content: space-between;
@@ -63,10 +65,11 @@
 }
 
 .project-notes {
-  background: white;
+  background: var(--surface-color);
   padding: 24px;
   border-radius: var(--border-radius);
   box-shadow: var(--box-shadow);
+  border: 1px solid var(--border-color);
   margin-top: 30px;
 }
 
@@ -87,10 +90,11 @@
 }
 
 .task-list-controls {
-  background: white;
+  background: var(--surface-color);
   padding: 20px;
   border-radius: var(--border-radius);
   box-shadow: var(--box-shadow);
+  border: 1px solid var(--border-color);
   margin-bottom: 24px;
   display: flex;
   flex-wrap: wrap;
@@ -118,22 +122,24 @@
 }
 
 .phase-container {
-  background: white;
+  background: var(--surface-color);
   border-radius: var(--border-radius);
   box-shadow: var(--box-shadow);
+  border: 1px solid var(--border-color);
   overflow: hidden;
 }
 
 .phase-header {
   padding: 20px;
   cursor: pointer;
-  background: linear-gradient(135deg, #f8f9fa 0%, #e9ecef 100%);
-  border-bottom: 1px solid #dee2e6;
+  background: linear-gradient(135deg, #374151 0%, #1f2937 100%);
+  color: #fff;
+  border-bottom: 1px solid var(--border-color);
   transition: var(--transition);
 }
 
 .phase-header:hover {
-  background: linear-gradient(135deg, #e9ecef 0%, #dee2e6 100%);
+  background: linear-gradient(135deg, #4b5563 0%, #111827 100%);
 }
 
 .phase-info {
@@ -216,16 +222,17 @@
 .no-phases {
   text-align: center;
   padding: 60px 20px;
-  background: white;
+  background: var(--surface-color);
   border-radius: var(--border-radius);
   box-shadow: var(--box-shadow);
-  color: var(--secondary-color);
+  border: 1px solid var(--border-color);
+  color: var(--muted-text);
 }
 
 /* TaskCard Styles */
 .task-card {
-  background: white;
-  border: 1px solid #e9ecef;
+  background: var(--surface-color);
+  border: 1px solid var(--border-color);
   border-radius: var(--border-radius);
   padding: 20px;
   transition: var(--transition);
@@ -319,23 +326,23 @@
 }
 
 .deadline-status.normal {
-  background-color: #e7f5e7;
-  color: #2e7d2e;
+  background-color: #dcfce7;
+  color: #166534;
 }
 
 .deadline-status.urgent {
-  background-color: #fff3cd;
-  color: #856404;
+  background-color: #fef9c3;
+  color: #854d0e;
 }
 
 .deadline-status.today {
-  background-color: #cce5ff;
-  color: #004085;
+  background-color: #dbeafe;
+  color: #1e3a8a;
 }
 
 .deadline-status.overdue {
-  background-color: #f8d7da;
-  color: #721c24;
+  background-color: #fee2e2;
+  color: #7f1d1d;
 }
 
 .task-actors {
@@ -375,7 +382,8 @@
 .task-output {
   margin-bottom: 12px;
   padding: 12px;
-  background-color: #f8f9fa;
+  background-color: var(--panel-color);
+  color: var(--text-color);
   border-radius: var(--border-radius);
   border-left: 3px solid var(--primary-color);
 }
@@ -470,9 +478,9 @@
   justify-content: space-between;
   align-items: center;
   padding: 8px 12px;
-  background-color: #f8f9fa;
+  background-color: var(--light-color);
   border-radius: var(--border-radius);
-  border: 1px solid #e9ecef;
+  border: 1px solid var(--border-color);
 }
 
 .btn-remove {
@@ -491,7 +499,7 @@
   gap: 8px;
   max-height: 200px;
   overflow-y: auto;
-  border: 1px solid #e9ecef;
+  border: 1px solid var(--border-color);
   border-radius: var(--border-radius);
   padding: 12px;
 }
@@ -507,7 +515,7 @@
 }
 
 .dependency-item:hover {
-  background-color: #f8f9fa;
+  background-color: rgba(255, 255, 255, 0.06);
 }
 
 .dependency-name {

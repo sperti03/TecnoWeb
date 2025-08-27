@@ -18,12 +18,14 @@ interface NotificationButtonProps {
   notifications: Invitation[];
   onAccept?: (invitationId: string) => void;
   onDecline?: (invitationId: string) => void;
+  inline?: boolean; // when true, render suitable for navbar (no absolute positioning)
 }
 
 export default function NotificationButton({
   notifications,
   onAccept = () => {},
   onDecline = () => {},
+  inline = false,
 }: NotificationButtonProps) {
   const [isOpen, setIsOpen] = useState(false);
   const navigate = useNavigate();
@@ -47,7 +49,7 @@ export default function NotificationButton({
   };
 
   return (
-    <div className="notification-button-container">
+    <div className={`notification-button-container${inline ? " inline" : ""}`}>
       <button className="notification-bell" onClick={() => setIsOpen(!isOpen)}>
         🔔
         {notifications.length > 0 && (

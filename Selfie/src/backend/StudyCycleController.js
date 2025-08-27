@@ -13,15 +13,7 @@ const studyCycleRoutes = express.Router();
 studyCycleRoutes.use(cors());
 studyCycleRoutes.use(express.json());
 
-// Connect to MongoDB
-const mongoUri = process.env.MONGO_URI;
-mongoose.connect(mongoUri, {})
-  .then(() => {
-    console.log('Connected to MongoDB, study cycles');
-  })
-  .catch(err => {
-    console.error('Failed to connect to MongoDB', err);
-  });
+// Connessione MongoDB centralizzata in index.js
 
 // JWT verification middleware
 const verifyToken = (req, res, next) => {
@@ -31,7 +23,7 @@ const verifyToken = (req, res, next) => {
     return res.status(403).send('Token mancante');
   }
 
-  jwt.verify(token, 'tuasecretkey', (err, decoded) => {
+  jwt.verify(token, process.env.JWT_SECRET || 'tuasecretkey', (err, decoded) => {
     if (err) {
       return res.status(401).send('Token non valido');
     }

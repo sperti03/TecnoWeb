@@ -45,12 +45,17 @@ const Login: React.FC<LoginProps> = ({ switchToSignup }) => {
           if (decoded && decoded.userId) {
             localStorage.setItem("userId", decoded.userId);
           }
+          // Persist username for quick greeting/avatar initial
+          const decodedAny: any = decoded as any;
+          if (decodedAny && decodedAny.username) {
+            localStorage.setItem("username", decodedAny.username);
+          }
         } catch (e) {
           console.error("Errore nella decodifica del token per userId", e);
         }
         console.log("Login successful");
         setError("");
-        navigate("/HomePage");
+        navigate("/Homepage");
       } else {
         const errorMessage = await response.text();
         console.error("Login non riuscito:", errorMessage);

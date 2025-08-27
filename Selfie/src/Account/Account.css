@@ -15,7 +15,7 @@
 
 .account-icon {
   font-size: 2.5rem;
-  color: #333;
+  color: var(--text-color);
 }
 
 .account-avatar {
@@ -76,7 +76,7 @@
 .account-username {
   font-weight: 600;
   font-size: 1rem;
-  color: #333;
+  color: var(--text-color);
 }
 
 .account-menu ul {
@@ -91,8 +91,8 @@
 
 .account-menu button {
   background-color: #f1f3f5;
-  color: #333;
-  border: 1px solid #ced4da;
+  color: var(--text-color);
+  border: 1px solid var(--border-color);
   padding: 10px 15px;
   width: 100%;
   text-align: left;
@@ -104,6 +104,6 @@
 
 .account-menu button:hover {
   background-color: #dee2e6;
-  color: #007bff;
-  border-color: #007bff;
+  color: var(--primary-color);
+  border-color: var(--primary-color);
 }

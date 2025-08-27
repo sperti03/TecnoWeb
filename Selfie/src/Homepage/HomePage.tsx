@@ -1,12 +1,14 @@
 import React, { useEffect, useState, useRef } from "react";
+import { JwtPayload, jwtDecode } from "jwt-decode";
 import { useNavigate } from "react-router-dom";
 import Hello from "./Hello";
 import MessageList from "../Messages/MessageList";
 import { returnfirstNote } from "../Note/NoteHome";
 import { Note, SortCriteria } from "../Note/types";
-import Account from "../Account/Account";
+import ProfileModal from "../Account/ProfileModal";
 import NotificationButton from "../components/NotificationButton/NotificationButton";
 import TimeMachineComponent from "../TimeMachine/TimeMachine";
+import { StudyCycleService } from "../StudyCycle/StudyCycleService";
 import "./HomePage.css";
 import {
   AppBar,
@@ -30,7 +32,7 @@ import {
   Fab,
   Paper,
   Button,
-  Badge
+  Badge,
 } from "@mui/material";
 import {
   Menu as MenuIcon,
@@ -46,7 +48,7 @@ import {
   Work as ProjectIcon,
   School as StudyIcon,
   Notifications as NotificationsIcon,
-  AccessTime as TimeMachineIcon
+  AccessTime as TimeMachineIcon,
 } from "@mui/icons-material";
 
 interface Invitation {
@@ -70,15 +72,95 @@ interface HomePageProps {
 function HomePage({
   notifications = [],
   onAcceptInvitation = () => {},
-  onDeclineInvitation = () => {}
+  onDeclineInvitation = () => {},
 }: HomePageProps) {
   const navigate = useNavigate();
   const [firstNote, setFirstNote] = useState<Note | null>(null);
   const [loading, setLoading] = useState(true);
   const [sortCriteria, setSortCriteria] = useState<SortCriteria>("date");
   const [drawerOpen, setDrawerOpen] = useState(false);
-  const [userMenuAnchor, setUserMenuAnchor] = useState<null | HTMLElement>(null);
+  const [userMenuAnchor, setUserMenuAnchor] = useState<null | HTMLElement>(
+    null
+  );
   const [currentUser, setCurrentUser] = useState<string>("");
+  const [profileImage, setProfileImage] = useState<string | null>(null);
+  const [isProfileModalOpen, setIsProfileModalOpen] = useState(false);
+
+  // Stati per le preview delle sezioni
+  const [lastEvent, setLastEvent] = useState<any | null>(null);
+  const [lastStudyCycle, setLastStudyCycle] = useState<any | null>(null);
+  const [lastProject, setLastProject] = useState<any | null>(null);
+
+  // Funzione per ottenere gli headers di autenticazione
+  const getAuthHeaders = () => {
+    const token = localStorage.getItem("token");
+    return {
+      "Content-Type": "application/json",
+      Authorization: `Bearer ${token}`,
+    };
+  };
+
+  // Funzione per recuperare l'ultimo evento del calendario
+  const fetchLastEvent = async () => {
+    try {
+      const response = await fetch("/api/events?limit=1&sort=start:desc", {
+        headers: getAuthHeaders(),
+      });
+
+      if (response.ok) {
+        const events = await response.json();
+        if (events && events.length > 0) {
+          setLastEvent({
+            ...events[0],
+            start: new Date(events[0].start),
+            end: new Date(events[0].end),
+          });
+        }
+      }
+    } catch (error) {
+      console.error("Errore nel recupero dell'ultimo evento:", error);
+    }
+  };
+
+  // Funzione per recuperare l'ultima sessione Pomodoro
+  const fetchLastStudyCycle = async () => {
+    try {
+      const studyCycles = await StudyCycleService.getStudyCycles();
+      if (studyCycles && studyCycles.length > 0) {
+        // Ordina per data più recente
+        studyCycles.sort(
+          (a, b) => new Date(b.date).getTime() - new Date(a.date).getTime()
+        );
+        setLastStudyCycle(studyCycles[0]);
+      }
+    } catch (error) {
+      console.error("Errore nel recupero dell'ultimo study cycle:", error);
+    }
+  };
+
+  // Funzione per recuperare l'ultimo progetto
+  const fetchLastProject = async () => {
+    try {
+      const response = await fetch("/api/getprojects", {
+        headers: getAuthHeaders(),
+      });
+
+      if (response.ok) {
+        const projects = await response.json();
+        if (projects && projects.length > 0) {
+          // Ordina per data di aggiornamento più recente
+          projects.sort(
+            (a, b) =>
+              new Date(b.updatedAt || b.createdAt).getTime() -
+              new Date(a.updatedAt || a.createdAt).getTime()
+          );
+          setLastProject(projects[0]);
+        }
+      }
+    } catch (error) {
+      console.error("Errore nel recupero dell'ultimo progetto:", error);
+    }
+  };
 
   useEffect(() => {
     const fetchFirstNote = async () => {
@@ -88,11 +170,39 @@ function HomePage({
     };
 
     fetchFirstNote();
+    fetchLastEvent();
+    fetchLastStudyCycle();
+    fetchLastProject();
 
-    // Get current user info
-    const username = localStorage.getItem("username");
-    if (username) {
-      setCurrentUser(username);
+    // Get current user info and profile image from JWT
+    const token = localStorage.getItem("token");
+    try {
+      if (token) {
+        interface DecodedToken extends JwtPayload {
+          username?: string;
+          userId?: string;
+        }
+        const decoded = jwtDecode<DecodedToken>(token);
+        const usernameFromToken =
+          decoded.username || localStorage.getItem("username") || "";
+        setCurrentUser(usernameFromToken);
+
+        const storedUserId =
+          localStorage.getItem("userId") || decoded.userId || "";
+        if (storedUserId) {
+          fetch(`/api/user/${storedUserId}/image`)
+            .then((res) => {
+              if (!res.ok) throw new Error("No profile image");
+              return res.blob();
+            })
+            .then((blob) => setProfileImage(URL.createObjectURL(blob)))
+            .catch(() => {});
+        }
+      }
+    } catch (e) {
+      // Fallback: keep existing currentUser from localStorage if set
+      const username = localStorage.getItem("username");
+      if (username) setCurrentUser(username);
     }
   }, [sortCriteria]);
 
@@ -118,10 +228,18 @@ function HomePage({
       category: "📊 Dashboard",
       items: [
         { name: "Home", icon: <DashboardIcon />, path: "/Homepage" },
-        { name: "Master Calendar", icon: <CalendarIcon />, path: "/master-calendar" },
-        { name: "Calendario Dashboard", icon: <ScheduleIcon />, path: "/calendario-dashboard" },
-        { name: "Statistiche", icon: <StatsIcon />, path: "/statistics" }
-      ]
+        {
+          name: "Master Calendar",
+          icon: <CalendarIcon />,
+          path: "/master-calendar",
+        },
+        {
+          name: "Calendario Dashboard",
+          icon: <ScheduleIcon />,
+          path: "/calendario-dashboard",
+        },
+        { name: "Statistiche", icon: <StatsIcon />, path: "/statistics" },
+      ],
     },
     {
       category: "🛠️ Strumenti",
@@ -129,16 +247,16 @@ function HomePage({
         { name: "Note", icon: <NoteIcon />, path: "/Note" },
         { name: "Pomodoro Timer", icon: <PomodoroIcon />, path: "/Pomodoro" },
         { name: "Progetti", icon: <ProjectIcon />, path: "/progetti" },
-        { name: "Study Cycles", icon: <StudyIcon />, path: "/studycycle" }
-      ]
+        { name: "Study Cycles", icon: <StudyIcon />, path: "/studycycle" },
+      ],
     },
     {
       category: "⚙️ Impostazioni",
       items: [
         { name: "Profilo Utente", icon: <PersonIcon />, path: "/profile" },
-        { name: "Impostazioni App", icon: <SettingsIcon />, path: "/settings" }
-      ]
-    }
+        { name: "Impostazioni App", icon: <SettingsIcon />, path: "/settings" },
+      ],
+    },
   ];
 
   const renderDrawer = () => (
@@ -146,36 +264,29 @@ function HomePage({
       anchor="left"
       open={drawerOpen}
       onClose={handleDrawerToggle}
-      sx={{
-        '& .MuiDrawer-paper': {
-          width: 280,
-          background: 'linear-gradient(180deg, #667eea 0%, #764ba2 100%)',
-          color: 'white'
-        }
-      }}
+      PaperProps={{ className: "drawer-menu", sx: { width: 280 } }}
     >
-      <Box sx={{ p: 2 }}>
-        <Typography variant="h6" gutterBottom sx={{ color: 'white', fontWeight: 'bold' }}>
+      <Box className="drawer-header" sx={{ p: 2 }}>
+        <Typography
+          variant="h6"
+          gutterBottom
+          sx={{ color: "var(--dark-color)", fontWeight: "bold" }}
+        >
           🗓️ TecnoWeb Dashboard
         </Typography>
-        <Typography variant="body2" sx={{ color: 'rgba(255,255,255,0.8)' }}>
-          Benvenuto, {currentUser || 'Utente'}
+        <Typography variant="body2" sx={{ color: "var(--muted-text)" }}>
+          Benvenuto, {currentUser ? currentUser : "Utente"}
         </Typography>
       </Box>
-      
-      <Divider sx={{ borderColor: 'rgba(255,255,255,0.2)' }} />
-      
+
+      <Divider sx={{ borderColor: "rgba(255,255,255,0.2)" }} />
+
       {menuItems.map((section, sectionIndex) => (
         <Box key={sectionIndex}>
-          <Typography 
-            variant="subtitle2" 
-            sx={{ 
-              px: 2, 
-              py: 1, 
-              color: 'rgba(255,255,255,0.9)',
-              fontWeight: 'bold',
-              fontSize: '0.85rem'
-            }}
+          <Typography
+            variant="subtitle2"
+            className="drawer-section-title"
+            sx={{ px: 2, py: 1 }}
           >
             {section.category}
           </Typography>
@@ -184,36 +295,34 @@ function HomePage({
               <ListItem
                 key={itemIndex}
                 onClick={() => {
+                  if (item.path === "/profile") {
+                    setIsProfileModalOpen(true);
+                    setDrawerOpen(false);
+                    return;
+                  }
                   navigate(item.path);
                   setDrawerOpen(false);
                 }}
-                sx={{
-                  cursor: 'pointer',
-                  borderRadius: '8px',
-                  mx: 1,
-                  mb: 0.5,
-                  '&:hover': {
-                    backgroundColor: 'rgba(255,255,255,0.1)',
-                    transform: 'translateX(4px)',
-                    transition: 'all 0.2s ease'
-                  }
-                }}
+                className="drawer-menu-item"
+                sx={{ cursor: "pointer", borderRadius: "8px", mx: 1, mb: 0.5 }}
               >
-                <ListItemIcon sx={{ color: 'white', minWidth: 36 }}>
+                <ListItemIcon sx={{ color: "var(--text-color)", minWidth: 36 }}>
                   {item.icon}
                 </ListItemIcon>
-                <ListItemText 
+                <ListItemText
                   primary={item.name}
                   primaryTypographyProps={{
-                    fontSize: '0.9rem',
-                    fontWeight: 500
+                    fontSize: "0.9rem",
+                    fontWeight: 500,
                   }}
                 />
               </ListItem>
             ))}
           </List>
           {sectionIndex < menuItems.length - 1 && (
-            <Divider sx={{ borderColor: 'rgba(255,255,255,0.1)', mx: 2, my: 1 }} />
+            <Divider
+              sx={{ borderColor: "var(--border-color)", mx: 2, my: 1 }}
+            />
           )}
         </Box>
       ))}
@@ -221,34 +330,42 @@ function HomePage({
   );
 
   const quickStats = [
-    { 
-      title: "Note Attive", 
-      value: firstNote ? "1+" : "0", 
-      icon: <NoteIcon sx={{ color: '#9c27b0' }} />,
-      action: () => navigate("/Note")
+    {
+      title: "Note Attive",
+      value: firstNote ? "1+" : "0",
+      icon: <NoteIcon sx={{ color: "#9c27b0" }} />,
+      action: () => navigate("/Note"),
     },
-    { 
-      title: "Progetti", 
-      value: "2", 
-      icon: <ProjectIcon sx={{ color: '#2196f3' }} />,
-      action: () => navigate("/progetti")
+    {
+      title: "Progetti",
+      value: "2",
+      icon: <ProjectIcon sx={{ color: "#2196f3" }} />,
+      action: () => navigate("/progetti"),
     },
-    { 
-      title: "Study Cycles", 
-      value: "3", 
-      icon: <StudyIcon sx={{ color: '#ff9800' }} />,
-      action: () => navigate("/studycycle")
-    }
+    {
+      title: "Study Cycles",
+      value: "3",
+      icon: <StudyIcon sx={{ color: "#ff9800" }} />,
+      action: () => navigate("/studycycle"),
+    },
   ];
 
   return (
-    <Box sx={{ display: 'flex', flexDirection: 'column', minHeight: '100vh', bgcolor: '#f5f7fa' }}>
+    <Box
+      sx={{
+        display: "flex",
+        flexDirection: "column",
+        minHeight: "100vh",
+        bgcolor: "var(--background-color)",
+        color: "var(--text-color)",
+      }}
+    >
       {/* Header */}
-      <AppBar 
-        position="static" 
-        sx={{ 
-          background: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)',
-          boxShadow: '0 4px 20px rgba(102, 126, 234, 0.3)'
+      <AppBar
+        position="static"
+        sx={{
+          background: "linear-gradient(135deg, #374151 0%, #1f2937 100%)",
+          boxShadow: "0 4px 20px rgba(0, 0, 0, 0.3)",
         }}
       >
         <Toolbar>
@@ -263,9 +380,27 @@ function HomePage({
           </IconButton>
 
           {/* Title */}
-          <Typography variant="h6" component="div" sx={{ flexGrow: 1, fontWeight: 'bold' }}>
-            🗓️ TecnoWeb - Workspace Unificato
+          <Typography
+            variant="h6"
+            component="div"
+            sx={{ flexGrow: 1, fontWeight: "bold" }}
+          >
+            Selfie - Workspace
           </Typography>
+
+          {/* Notifications */}
+          <Badge
+            badgeContent={notifications.length}
+            color="error"
+            sx={{ mr: 1 }}
+          >
+            <NotificationButton
+              notifications={notifications}
+              onAccept={onAcceptInvitation}
+              onDecline={onDeclineInvitation}
+              inline
+            />
+          </Badge>
 
           {/* User Menu */}
           <IconButton
@@ -273,19 +408,13 @@ function HomePage({
             onClick={handleUserMenuOpen}
             sx={{ mr: 1 }}
           >
-            <Avatar sx={{ width: 32, height: 32, bgcolor: 'rgba(255,255,255,0.2)' }}>
-              {currentUser.charAt(0).toUpperCase() || 'U'}
+            <Avatar
+              sx={{ width: 32, height: 32, bgcolor: "rgba(255,255,255,0.2)" }}
+              src={profileImage || undefined}
+            >
+              {currentUser.charAt(0).toUpperCase() || "U"}
             </Avatar>
           </IconButton>
-
-          {/* Notifications */}
-          <Badge badgeContent={notifications.length} color="error">
-            <NotificationButton
-              notifications={notifications}
-              onAccept={onAcceptInvitation}
-              onDecline={onDeclineInvitation}
-            />
-          </Badge>
         </Toolbar>
       </AppBar>
 
@@ -295,10 +424,20 @@ function HomePage({
         open={Boolean(userMenuAnchor)}
         onClose={handleUserMenuClose}
       >
-        <MenuItem onClick={() => { navigate("/profile"); handleUserMenuClose(); }}>
+        <MenuItem
+          onClick={() => {
+            setIsProfileModalOpen(true);
+            handleUserMenuClose();
+          }}
+        >
           <PersonIcon sx={{ mr: 1 }} /> Profilo
         </MenuItem>
-        <MenuItem onClick={() => { navigate("/settings"); handleUserMenuClose(); }}>
+        <MenuItem
+          onClick={() => {
+            navigate("/settings");
+            handleUserMenuClose();
+          }}
+        >
           <SettingsIcon sx={{ mr: 1 }} /> Impostazioni
         </MenuItem>
         <Divider />
@@ -316,254 +455,253 @@ function HomePage({
         <Grid container spacing={3} sx={{ mb: 3 }}>
           {quickStats.map((stat, index) => (
             <Grid item xs={12} sm={4} key={index}>
-              <Card 
-                sx={{ 
-                  background: 'linear-gradient(135deg, rgba(255,255,255,0.9), rgba(255,255,255,0.7))',
-                  backdropFilter: 'blur(10px)',
-                  border: '1px solid rgba(255,255,255,0.2)',
-                  cursor: 'pointer',
-                  transition: 'all 0.2s ease',
-                  '&:hover': {
-                    transform: 'translateY(-4px)',
-                    boxShadow: '0 8px 25px rgba(0,0,0,0.1)'
-                  }
+              <Card
+                sx={{
+                  background: "var(--surface-color)",
+                  border: "1px solid var(--border-color)",
+                  cursor: "pointer",
+                  transition: "all 0.2s ease",
+                  "&:hover": {
+                    transform: "translateY(-4px)",
+                    boxShadow: "0 8px 25px rgba(0,0,0,0.35)",
+                  },
                 }}
                 onClick={stat.action}
               >
-                <CardContent sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+                <CardContent
+                  sx={{
+                    display: "flex",
+                    alignItems: "center",
+                    justifyContent: "space-between",
+                  }}
+                >
                   <Box>
-                    <Typography variant="h4" sx={{ fontWeight: 'bold', mb: 0.5 }}>
+                    <Typography
+                      variant="h4"
+                      sx={{ fontWeight: "bold", mb: 0.5 }}
+                    >
                       {stat.value}
                     </Typography>
                     <Typography variant="body2" color="textSecondary">
                       {stat.title}
                     </Typography>
                   </Box>
-                  <Box sx={{ ml: 2 }}>
-                    {stat.icon}
-                  </Box>
+                  <Box sx={{ ml: 2 }}>{stat.icon}</Box>
                 </CardContent>
               </Card>
             </Grid>
           ))}
         </Grid>
 
-        {/* Calendar Section - Sezione Principale */}
-        <Paper 
-          elevation={3}
-          sx={{ 
-            mb: 4,
-            borderRadius: 3,
-            overflow: 'hidden',
-            background: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)',
-            color: 'white',
-            position: 'relative',
-            minHeight: 400,
-            cursor: 'pointer',
-            transition: 'all 0.3s ease',
-            '&:hover': {
-              transform: 'scale(1.01)',
-              boxShadow: '0 25px 80px rgba(102, 126, 234, 0.3)'
-            }
-          }}
-          onClick={() => navigate("/master-calendar")}
-        >
-          {/* Background Pattern */}
-          <Box 
-            sx={{ 
-              position: 'absolute',
-              top: 0,
-              left: 0,
-              right: 0,
-              bottom: 0,
-              background: `
-                radial-gradient(circle at 20% 20%, rgba(255,255,255,0.1) 0%, transparent 50%),
-                radial-gradient(circle at 80% 80%, rgba(255,255,255,0.1) 0%, transparent 50%),
-                radial-gradient(circle at 40% 60%, rgba(255,255,255,0.05) 0%, transparent 50%)
-              `,
-              zIndex: 1
-            }} 
-          />
-          
-          <Box sx={{ p: 4, position: 'relative', zIndex: 2, height: '100%', display: 'flex', flexDirection: 'column', justifyContent: 'space-between' }}>
-            {/* Header */}
-            <Box>
-              <Box sx={{ display: 'flex', alignItems: 'center', mb: 3 }}>
-                <CalendarIcon sx={{ fontSize: 48, mr: 2 }} />
-                <Box>
-                  <Typography variant="h4" sx={{ fontWeight: 'bold', mb: 1 }}>
-                    📅 Calendario Master
-                  </Typography>
-                  <Typography variant="h6" sx={{ opacity: 0.9 }}>
-                    Il cuore del tuo workspace
-                  </Typography>
-                </Box>
-              </Box>
-              
-              <Typography variant="body1" sx={{ opacity: 0.9, mb: 4, fontSize: '1.1rem', lineHeight: 1.6 }}>
-                Gestisci tutti i tuoi eventi, progetti, study cycles e note in un'unica vista unificata. 
-                Sincronizzazione automatica, filtri avanzati e statistiche complete.
-              </Typography>
-              
-              {/* Features Grid */}
-              <Grid container spacing={2} sx={{ mb: 4 }}>
-                <Grid item xs={12} sm={6}>
-                  <Box sx={{ display: 'flex', alignItems: 'center', mb: 2 }}>
-                    <ScheduleIcon sx={{ mr: 2, opacity: 0.8 }} />
-                    <Typography variant="body2">Eventi & Ricorrenze</Typography>
-                  </Box>
-                </Grid>
-                <Grid item xs={12} sm={6}>
-                  <Box sx={{ display: 'flex', alignItems: 'center', mb: 2 }}>
-                    <ProjectIcon sx={{ mr: 2, opacity: 0.8 }} />
-                    <Typography variant="body2">Progetti & Milestone</Typography>
-                  </Box>
-                </Grid>
-                <Grid item xs={12} sm={6}>
-                  <Box sx={{ display: 'flex', alignItems: 'center', mb: 2 }}>
-                    <StudyIcon sx={{ mr: 2, opacity: 0.8 }} />
-                    <Typography variant="body2">Study Cycles</Typography>
-                  </Box>
-                </Grid>
-                <Grid item xs={12} sm={6}>
-                  <Box sx={{ display: 'flex', alignItems: 'center', mb: 2 }}>
-                    <NoteIcon sx={{ mr: 2, opacity: 0.8 }} />
-                    <Typography variant="body2">Note & To-Do</Typography>
-                  </Box>
-                </Grid>
-              </Grid>
-            </Box>
-            
-            {/* Action Buttons */}
-            <Box sx={{ display: 'flex', gap: 2, flexWrap: 'wrap' }}>
-              <Button
-                variant="contained"
-                size="large"
-                startIcon={<CalendarIcon />}
-                onClick={(e) => {
-                  e.stopPropagation();
-                  navigate("/master-calendar");
-                }}
-                sx={{ 
-                  backgroundColor: 'rgba(255,255,255,0.2)',
-                  color: 'white',
-                  borderRadius: 3,
-                  px: 3,
-                  py: 1.5,
-                  fontSize: '1.1rem',
-                  fontWeight: 'bold',
-                  backdropFilter: 'blur(10px)',
-                  border: '1px solid rgba(255,255,255,0.3)',
-                  '&:hover': {
-                    backgroundColor: 'rgba(255,255,255,0.3)',
-                    transform: 'translateY(-2px)',
-                    boxShadow: '0 8px 25px rgba(0,0,0,0.2)'
-                  }
-                }}
-              >
-                Apri Calendario Master
-              </Button>
-              
-              <Button
-                variant="outlined"
-                size="large"
-                startIcon={<StatsIcon />}
-                onClick={(e) => {
-                  e.stopPropagation();
-                  navigate("/calendario-dashboard");
-                }}
-                sx={{ 
-                  color: 'white',
-                  borderColor: 'rgba(255,255,255,0.5)',
-                  borderRadius: 3,
-                  px: 3,
-                  py: 1.5,
-                  fontSize: '1rem',
-                  fontWeight: 'bold',
-                  backdropFilter: 'blur(5px)',
-                  '&:hover': {
-                    backgroundColor: 'rgba(255,255,255,0.1)',
-                    borderColor: 'rgba(255,255,255,0.8)',
-                    transform: 'translateY(-2px)'
-                  }
-                }}
-              >
-                Dashboard
-              </Button>
-            </Box>
-          </Box>
-          
-          {/* Decorative Elements */}
-          <Box 
-            sx={{ 
-              position: 'absolute', 
-              top: -50, 
-              right: -50, 
-              width: 200, 
-              height: 200, 
-              borderRadius: '50%', 
-              background: 'rgba(255,255,255,0.1)',
-              zIndex: 1
-            }} 
-          />
-          <Box 
-            sx={{ 
-              position: 'absolute', 
-              bottom: -30, 
-              left: -30, 
-              width: 150, 
-              height: 150, 
-              borderRadius: '50%', 
-              background: 'rgba(255,255,255,0.05)',
-              zIndex: 1
-            }} 
-          />
-        </Paper>
-
-        {/* Three Main Sections */}
+        {/* Main Sections - 2x2 Grid */}
         <Grid container spacing={4}>
-          {/* Pomodoro Section */}
-          <Grid item xs={12} md={4}>
-            <Card 
-              sx={{ 
-                height: 300,
-                background: 'linear-gradient(135deg, #ff9800, #f57c00)',
-                color: 'white',
-                position: 'relative',
-                overflow: 'hidden',
-                cursor: 'pointer',
-                transition: 'all 0.3s ease',
-                '&:hover': {
-                  transform: 'scale(1.02)',
-                  boxShadow: '0 15px 40px rgba(255, 152, 0, 0.3)'
-                }
+          {/* Calendar Section */}
+          <Grid item xs={12} md={6}>
+            <Card
+              sx={{
+                height: 350,
+                color: "white",
+                position: "relative",
+                overflow: "hidden",
+                cursor: "pointer",
+                transition: "all 0.3s ease",
+                background: "linear-gradient(135deg, #374151 0%, #1f2937 100%)",
+                width: "100%",
+                "&:hover": {
+                  transform: "translateY(-4px)",
+                  boxShadow: "0 12px 20px rgba(59, 130, 246, 0.4)",
+                },
               }}
-              onClick={() => navigate("/Pomodoro")}
+              onClick={() => navigate("/master-calendar")}
             >
-              <CardContent sx={{ height: '100%', display: 'flex', flexDirection: 'column', justifyContent: 'space-between', p: 3 }}>
+              <CardContent
+                sx={{
+                  height: "100%",
+                  display: "flex",
+                  flexDirection: "column",
+                  justifyContent: "space-between",
+                  p: 3,
+                }}
+              >
                 <Box>
-                  <Box sx={{ display: 'flex', alignItems: 'center', mb: 2 }}>
-                    <PomodoroIcon sx={{ fontSize: 40, mr: 2 }} />
-                    <Typography variant="h5" sx={{ fontWeight: 'bold' }}>
-                      🍅 Pomodoro Timer
+                  <Box sx={{ display: "flex", alignItems: "center", mb: 2 }}>
+                    <CalendarIcon sx={{ fontSize: 40, mr: 2 }} />
+                    <Typography variant="h5" sx={{ fontWeight: "bold" }}>
+                      Calendario
                     </Typography>
                   </Box>
                   <Typography variant="body1" sx={{ mb: 3, opacity: 0.9 }}>
-                    Migliora la tua produttività con la tecnica Pomodoro. 
-                    Sessioni di studio focalizzate con pause programmate.
+                    Gestisci tutti i tuoi eventi, progetti e study cycles. Vista
+                    unificata e sincronizzazione automatica.
                   </Typography>
+
+                  {lastEvent && (
+                    <Box
+                      sx={{
+                        backgroundColor: "rgba(255,255,255,0.1)",
+                        p: 2,
+                        borderRadius: 2,
+                        mb: 2,
+                      }}
+                    >
+                      <Typography
+                        variant="body2"
+                        sx={{ fontWeight: "bold", mb: 1 }}
+                      >
+                        Prossimo evento:
+                      </Typography>
+                      <Typography variant="body2" sx={{ opacity: 0.9 }}>
+                        {lastEvent.title}
+                      </Typography>
+                      <Typography
+                        variant="body2"
+                        sx={{ opacity: 0.7, fontSize: "0.8rem", mt: 1 }}
+                      >
+                        {lastEvent.start.toLocaleDateString()}{" "}
+                        {lastEvent.start.toLocaleTimeString([], {
+                          hour: "2-digit",
+                          minute: "2-digit",
+                        })}
+                      </Typography>
+                    </Box>
+                  )}
                 </Box>
-                
+
                 <Box>
                   <Button
-                    variant="outlined"
-                    sx={{ 
-                      color: 'white', 
-                      borderColor: 'white',
-                      '&:hover': {
-                        backgroundColor: 'rgba(255,255,255,0.1)',
-                        borderColor: 'white'
-                      }
+                    variant="contained"
+                    color="inherit"
+                    className="calendar-section-button"
+                    sx={{
+                      backgroundColor: "#374151 !important",
+                      color: "white !important",
+                      border: "1px solid rgba(255,255,255,0.8) !important",
+                      "&:hover": {
+                        backgroundColor: "#4b5563 !important",
+                        transform: "translateY(-2px)",
+                        boxShadow: "none !important",
+                      },
+                      "&.MuiButton-root": {
+                        backgroundColor: "#374151 !important",
+                      },
+                      "&.MuiButton-contained": {
+                        backgroundColor: "#374151 !important",
+                      },
+                    }}
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      navigate("/master-calendar");
+                    }}
+                  >
+                    Apri Calendario
+                  </Button>
+                </Box>
+              </CardContent>
+
+              {/* Decorative element */}
+              <Box
+                sx={{
+                  position: "absolute",
+                  top: -20,
+                  right: -20,
+                  width: 100,
+                  height: 100,
+                  borderRadius: "50%",
+                  background: "rgba(255,255,255,0.1)",
+                }}
+              />
+            </Card>
+          </Grid>
+
+          {/* Pomodoro Section */}
+          <Grid item xs={12} md={6}>
+            <Card
+              sx={{
+                height: 350,
+                color: "white",
+                position: "relative",
+                overflow: "hidden",
+                cursor: "pointer",
+                transition: "all 0.3s ease",
+                background: "linear-gradient(135deg, #374151 0%, #1f2937 100%)",
+                width: "100%",
+                "&:hover": {
+                  transform: "translateY(-4px)",
+                  boxShadow: "0 12px 20px rgba(245, 158, 11, 0.4)",
+                },
+              }}
+              onClick={() => navigate("/Pomodoro")}
+            >
+              <CardContent
+                sx={{
+                  height: "100%",
+                  display: "flex",
+                  flexDirection: "column",
+                  justifyContent: "space-between",
+                  p: 3,
+                }}
+              >
+                <Box>
+                  <Box sx={{ display: "flex", alignItems: "center", mb: 2 }}>
+                    <PomodoroIcon sx={{ fontSize: 40, mr: 2 }} />
+                    <Typography variant="h5" sx={{ fontWeight: "bold" }}>
+                      Pomodoro Timer
+                    </Typography>
+                  </Box>
+                  <Typography variant="body1" sx={{ mb: 3, opacity: 0.9 }}>
+                    Migliora la tua produttività con la tecnica Pomodoro.
+                    Sessioni di studio focalizzate con pause programmate.
+                  </Typography>
+
+                  {lastStudyCycle && (
+                    <Box
+                      sx={{
+                        backgroundColor: "rgba(255,255,255,0.1)",
+                        p: 2,
+                        borderRadius: 2,
+                        mb: 2,
+                      }}
+                    >
+                      <Typography
+                        variant="body2"
+                        sx={{ fontWeight: "bold", mb: 1 }}
+                      >
+                        Ultima sessione:
+                      </Typography>
+                      <Typography variant="body2" sx={{ opacity: 0.9 }}>
+                        {lastStudyCycle.title || "Studio"} -{" "}
+                        {lastStudyCycle.subject || "Generale"}
+                      </Typography>
+                      <Typography
+                        variant="body2"
+                        sx={{ opacity: 0.7, fontSize: "0.8rem", mt: 1 }}
+                      >
+                        {new Date(lastStudyCycle.date).toLocaleDateString()}
+                      </Typography>
+                    </Box>
+                  )}
+                </Box>
+
+                <Box>
+                  <Button
+                    variant="contained"
+                    color="inherit"
+                    className="pomodoro-section-button"
+                    sx={{
+                      backgroundColor: "#374151 !important",
+                      color: "white !important",
+                      border: "1px solid rgba(255,255,255,0.8) !important",
+                      "&:hover": {
+                        backgroundColor: "#4b5563 !important",
+                        transform: "translateY(-2px)",
+                        boxShadow: "none !important",
+                      },
+                      "&.MuiButton-root": {
+                        backgroundColor: "#374151 !important",
+                      },
+                      "&.MuiButton-contained": {
+                        backgroundColor: "#374151 !important",
+                      },
                     }}
                     onClick={(e) => {
                       e.stopPropagation();
@@ -574,75 +712,112 @@ function HomePage({
                   </Button>
                 </Box>
               </CardContent>
-              
+
               {/* Decorative element */}
-              <Box 
-                sx={{ 
-                  position: 'absolute', 
-                  top: -20, 
-                  right: -20, 
-                  width: 100, 
-                  height: 100, 
-                  borderRadius: '50%', 
-                  background: 'rgba(255,255,255,0.1)' 
-                }} 
+              <Box
+                sx={{
+                  position: "absolute",
+                  top: -20,
+                  right: -20,
+                  width: 100,
+                  height: 100,
+                  borderRadius: "50%",
+                  background: "rgba(255,255,255,0.1)",
+                }}
               />
             </Card>
           </Grid>
 
           {/* Note Section */}
-          <Grid item xs={12} md={4}>
-            <Card 
-              sx={{ 
-                height: 300,
-                background: 'linear-gradient(135deg, #9c27b0, #7b1fa2)',
-                color: 'white',
-                position: 'relative',
-                overflow: 'hidden',
-                cursor: 'pointer',
-                transition: 'all 0.3s ease',
-                '&:hover': {
-                  transform: 'scale(1.02)',
-                  boxShadow: '0 15px 40px rgba(156, 39, 176, 0.3)'
-                }
+          <Grid item xs={12} md={6}>
+            <Card
+              sx={{
+                height: 350,
+                color: "white",
+                position: "relative",
+                overflow: "hidden",
+                cursor: "pointer",
+                transition: "all 0.3s ease",
+                background: "linear-gradient(135deg, #374151 0%, #1f2937 100%)",
+                width: "100%",
+                "&:hover": {
+                  transform: "translateY(-4px)",
+                  boxShadow: "0 12px 20px rgba(6, 182, 212, 0.4)",
+                },
               }}
               onClick={() => navigate("/Note")}
             >
-              <CardContent sx={{ height: '100%', display: 'flex', flexDirection: 'column', justifyContent: 'space-between', p: 3 }}>
+              <CardContent
+                sx={{
+                  height: "100%",
+                  display: "flex",
+                  flexDirection: "column",
+                  justifyContent: "space-between",
+                  p: 3,
+                }}
+              >
                 <Box>
-                  <Box sx={{ display: 'flex', alignItems: 'center', mb: 2 }}>
+                  <Box sx={{ display: "flex", alignItems: "center", mb: 2 }}>
                     <NoteIcon sx={{ fontSize: 40, mr: 2 }} />
-                    <Typography variant="h5" sx={{ fontWeight: 'bold' }}>
-                      📝 Note Intelligenti
+                    <Typography variant="h5" sx={{ fontWeight: "bold" }}>
+                      Note
                     </Typography>
                   </Box>
                   <Typography variant="body1" sx={{ mb: 3, opacity: 0.9 }}>
-                    Gestisci le tue note con to-do lists integrate. 
+                    Gestisci le tue note con to-do lists integrate.
                     Sincronizzazione automatica con il calendario.
                   </Typography>
-                  
+
                   {firstNote && (
-                    <Box sx={{ backgroundColor: 'rgba(255,255,255,0.1)', p: 2, borderRadius: 2, mb: 2 }}>
-                      <Typography variant="body2" sx={{ fontWeight: 'bold', mb: 1 }}>
+                    <Box
+                      sx={{
+                        backgroundColor: "rgba(255,255,255,0.1)",
+                        p: 2,
+                        borderRadius: 2,
+                        mb: 2,
+                      }}
+                    >
+                      <Typography
+                        variant="body2"
+                        sx={{ fontWeight: "bold", mb: 1 }}
+                      >
                         Ultima nota:
                       </Typography>
                       <Typography variant="body2" sx={{ opacity: 0.9 }}>
                         {firstNote.title.substring(0, 50)}...
                       </Typography>
+                      <Typography
+                        variant="body2"
+                        sx={{ opacity: 0.7, fontSize: "0.8rem", mt: 1 }}
+                      >
+                        {new Date(
+                          firstNote.updatedAt || firstNote.createdAt
+                        ).toLocaleDateString()}
+                      </Typography>
                     </Box>
                   )}
                 </Box>
-                
+
                 <Box>
                   <Button
-                    variant="outlined"
-                    sx={{ 
-                      color: 'white', 
-                      borderColor: 'white',
-                      '&:hover': {
-                        backgroundColor: 'rgba(255,255,255,0.1)',
-                        borderColor: 'white'
-                      }
+                    variant="contained"
+                    color="inherit"
+                    className="notes-section-button"
+                    sx={{
+                      backgroundColor: "#1f2937 !important",
+                      color: "white !important",
+                      border: "1px solid rgba(255,255,255,0.8) !important",
+                      "&:hover": {
+                        backgroundColor: "#374151 !important",
+                        transform: "translateY(-2px)",
+                        boxShadow: "none !important",
+                      },
+                      "&.MuiButton-root": {
+                        backgroundColor: "#1f2937 !important",
+                      },
+                      "&.MuiButton-contained": {
+                        backgroundColor: "#1f2937 !important",
+                      },
                     }}
                     onClick={(e) => {
                       e.stopPropagation();
@@ -653,64 +828,115 @@ function HomePage({
                   </Button>
                 </Box>
               </CardContent>
-              
+
               {/* Decorative element */}
-              <Box 
-                sx={{ 
-                  position: 'absolute', 
-                  top: -20, 
-                  right: -20, 
-                  width: 100, 
-                  height: 100, 
-                  borderRadius: '50%', 
-                  background: 'rgba(255,255,255,0.1)' 
-                }} 
+              <Box
+                sx={{
+                  position: "absolute",
+                  top: -20,
+                  right: -20,
+                  width: 100,
+                  height: 100,
+                  borderRadius: "50%",
+                  background: "rgba(255,255,255,0.1)",
+                }}
               />
             </Card>
           </Grid>
 
           {/* Projects Section */}
-          <Grid item xs={12} md={4}>
-            <Card 
-              sx={{ 
-                height: 300,
-                background: 'linear-gradient(135deg, #2196f3, #1976d2)',
-                color: 'white',
-                position: 'relative',
-                overflow: 'hidden',
-                cursor: 'pointer',
-                transition: 'all 0.3s ease',
-                '&:hover': {
-                  transform: 'scale(1.02)',
-                  boxShadow: '0 15px 40px rgba(33, 150, 243, 0.3)'
-                }
+          <Grid item xs={12} md={6}>
+            <Card
+              sx={{
+                height: 350,
+                color: "white",
+                position: "relative",
+                overflow: "hidden",
+                cursor: "pointer",
+                transition: "all 0.3s ease",
+                background: "linear-gradient(135deg, #374151 0%, #1f2937 100%)",
+                width: "100%",
+                "&:hover": {
+                  transform: "translateY(-4px)",
+                  boxShadow: "0 12px 20px rgba(34, 197, 94, 0.4)",
+                },
               }}
               onClick={() => navigate("/progetti")}
             >
-              <CardContent sx={{ height: '100%', display: 'flex', flexDirection: 'column', justifyContent: 'space-between', p: 3 }}>
+              <CardContent
+                sx={{
+                  height: "100%",
+                  display: "flex",
+                  flexDirection: "column",
+                  justifyContent: "space-between",
+                  p: 3,
+                }}
+              >
                 <Box>
-                  <Box sx={{ display: 'flex', alignItems: 'center', mb: 2 }}>
+                  <Box sx={{ display: "flex", alignItems: "center", mb: 2 }}>
                     <ProjectIcon sx={{ fontSize: 40, mr: 2 }} />
-                    <Typography variant="h5" sx={{ fontWeight: 'bold' }}>
-                      🚀 Project Management
+                    <Typography variant="h5" sx={{ fontWeight: "bold" }}>
+                      Project Management
                     </Typography>
                   </Box>
                   <Typography variant="body1" sx={{ mb: 3, opacity: 0.9 }}>
-                    Organizza i tuoi progetti con task, milestone e Gantt chart. 
+                    Organizza i tuoi progetti con task, milestone e Gantt chart.
                     Integrazione completa con il calendario.
                   </Typography>
+
+                  {lastProject && (
+                    <Box
+                      sx={{
+                        backgroundColor: "rgba(255,255,255,0.1)",
+                        p: 2,
+                        borderRadius: 2,
+                        mb: 2,
+                      }}
+                    >
+                      <Typography
+                        variant="body2"
+                        sx={{ fontWeight: "bold", mb: 1 }}
+                      >
+                        Ultimo progetto:
+                      </Typography>
+                      <Typography variant="body2" sx={{ opacity: 0.9 }}>
+                        {lastProject.name}
+                      </Typography>
+                      <Typography
+                        variant="body2"
+                        sx={{ opacity: 0.7, fontSize: "0.8rem", mt: 1 }}
+                      >
+                        {lastProject.description &&
+                          lastProject.description.substring(0, 100)}
+                        {lastProject.description &&
+                        lastProject.description.length > 100
+                          ? "..."
+                          : ""}
+                      </Typography>
+                    </Box>
+                  )}
                 </Box>
-                
+
                 <Box>
                   <Button
-                    variant="outlined"
-                    sx={{ 
-                      color: 'white', 
-                      borderColor: 'white',
-                      '&:hover': {
-                        backgroundColor: 'rgba(255,255,255,0.1)',
-                        borderColor: 'white'
-                      }
+                    variant="contained"
+                    color="inherit"
+                    className="projects-section-button"
+                    sx={{
+                      backgroundColor: "#111827 !important",
+                      color: "white !important",
+                      border: "1px solid rgba(255,255,255,0.8) !important",
+                      "&:hover": {
+                        backgroundColor: "#1f2937 !important",
+                        transform: "translateY(-2px)",
+                        boxShadow: "none !important",
+                      },
+                      "&.MuiButton-root": {
+                        backgroundColor: "#111827 !important",
+                      },
+                      "&.MuiButton-contained": {
+                        backgroundColor: "#111827 !important",
+                      },
                     }}
                     onClick={(e) => {
                       e.stopPropagation();
@@ -721,26 +947,27 @@ function HomePage({
                   </Button>
                 </Box>
               </CardContent>
-              
+
               {/* Decorative element */}
-              <Box 
-                sx={{ 
-                  position: 'absolute', 
-                  top: -20, 
-                  right: -20, 
-                  width: 100, 
-                  height: 100, 
-                  borderRadius: '50%', 
-                  background: 'rgba(255,255,255,0.1)' 
-                }} 
+              <Box
+                sx={{
+                  position: "absolute",
+                  top: -20,
+                  right: -20,
+                  width: 100,
+                  height: 100,
+                  borderRadius: "50%",
+                  background: "rgba(255,255,255,0.1)",
+                }}
               />
             </Card>
           </Grid>
         </Grid>
       </Container>
-
-      {/* TimeMachine Button (Floating) */}
-      <TimeMachineComponent />
+      <ProfileModal
+        isOpen={isProfileModalOpen}
+        onClose={() => setIsProfileModalOpen(false)}
+      />
     </Box>
   );
 }

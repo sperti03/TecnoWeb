@@ -1,0 +1,355 @@
+/* global theme variables */
+:root {
+  /* Brand */
+  --primary-color: #3b82f6; /* blue-500 */
+  --primary-hover: #2563eb; /* blue-600 */
+  --secondary-color: #64748b; /* slate-500 */
+  --secondary-hover: #475569; /* slate-600 */
+  --success-color: #22c55e; /* green-500 */
+  --success-hover: #16a34a; /* green-600 */
+  --warning-color: #f59e0b; /* amber-500 */
+  --warning-hover: #d97706; /* amber-600 */
+  --danger-color: #ef4444; /* red-500 */
+  --danger-hover: #dc2626; /* red-600 */
+  --info-color: #06b6d4; /* cyan-500 */
+  --info-hover: #0891b2; /* cyan-600 */
+
+  /* Dark theme palette */
+  --background-color: #0b1220; /* deep navy */
+  --surface-color: #111827; /* gray-900 */
+  --panel-color: #1f2937; /* gray-800 */
+  --elevated-color: #0f172a; /* slate-900 */
+
+  --text-color: #e5e7eb; /* gray-200 */
+  --muted-text: #94a3b8; /* slate-400 */
+  --muted-text-weak: #64748b; /* slate-500 */
+  --dark-color: #cbd5e1; /* slate-300 for headings on dark */
+  --light-color: #1f2937; /* used as light panel in dark */
+
+  --border-color: #334155; /* slate-700 */
+
+  --primary-100: #1e3a8a; /* used for subtle highlights in dark */
+  --primary-200: #1d4ed8;
+  --primary-700: #1e40af;
+
+  --progress-low: var(--danger-color);
+  --progress-medium: var(--warning-color);
+  --progress-high: var(--success-color);
+
+  --focus-ring-color: #60a5fa; /* blue-400 */
+
+  /* Shared design tokens */
+  --border-radius: 8px;
+  --box-shadow: 0 2px 12px rgba(0, 0, 0, 0.5);
+  --transition: all 0.3s ease;
+}
+
+body {
+  color: var(--text-color);
+  background-color: var(--background-color);
+}
+
+/* Global form controls for dark theme */
+input,
+select,
+textarea {
+  background-color: var(--panel-color);
+  color: var(--text-color);
+  border: 1px solid var(--border-color);
+}
+
+input::placeholder,
+textarea::placeholder {
+  color: var(--muted-text);
+}
+
+label {
+  color: var(--dark-color);
+}
+
+/* Strong Bootstrap overrides for better button contrast */
+.btn-primary {
+  background-color: var(--primary-color) !important;
+  border-color: var(--primary-color) !important;
+  color: white !important;
+  font-weight: 600 !important;
+}
+
+.btn-primary:hover,
+.btn-primary:focus,
+.btn-primary:active {
+  background-color: var(--primary-hover) !important;
+  border-color: var(--primary-hover) !important;
+  color: white !important;
+  transform: translateY(-1px) !important;
+}
+
+.btn-secondary {
+  background-color: var(--secondary-color) !important;
+  border-color: var(--secondary-color) !important;
+  color: white !important;
+  font-weight: 600 !important;
+}
+
+.btn-secondary:hover,
+.btn-secondary:focus,
+.btn-secondary:active {
+  background-color: var(--secondary-hover) !important;
+  border-color: var(--secondary-hover) !important;
+  color: white !important;
+}
+
+.btn-success {
+  background-color: var(--success-color) !important;
+  border-color: var(--success-color) !important;
+  color: white !important;
+  font-weight: 600 !important;
+}
+
+.btn-success:hover,
+.btn-success:focus,
+.btn-success:active {
+  background-color: var(--success-hover) !important;
+  border-color: var(--success-hover) !important;
+  color: white !important;
+}
+
+.btn-warning {
+  background-color: var(--warning-color) !important;
+  border-color: var(--warning-color) !important;
+  color: white !important;
+  font-weight: 600 !important;
+}
+
+.btn-warning:hover,
+.btn-warning:focus,
+.btn-warning:active {
+  background-color: var(--warning-hover) !important;
+  border-color: var(--warning-hover) !important;
+  color: white !important;
+}
+
+.btn-danger {
+  background-color: var(--danger-color) !important;
+  border-color: var(--danger-color) !important;
+  color: white !important;
+  font-weight: 600 !important;
+}
+
+.btn-danger:hover,
+.btn-danger:focus,
+.btn-danger:active {
+  background-color: var(--danger-hover) !important;
+  border-color: var(--danger-hover) !important;
+  color: white !important;
+}
+
+/* Override any Bootstrap button styles */
+.btn {
+  font-weight: 600 !important;
+  border-radius: var(--border-radius) !important;
+  transition: var(--transition) !important;
+}
+
+/* Ensure all buttons have proper contrast */
+button, .btn {
+  text-shadow: 0 1px 2px rgba(0, 0, 0, 0.25) !important;
+}
+
+/* Override custom button styles that might not use Bootstrap classes */
+button[type="submit"],
+input[type="submit"],
+.btn {
+  font-weight: 600 !important;
+  border-radius: var(--border-radius) !important;
+  transition: var(--transition) !important;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1) !important;
+}
+
+/* Specific overrides for common button patterns */
+.chat-button,
+.create-button,
+.action-button {
+  background-color: #374151 !important;
+  border-color: #374151 !important;
+  color: white !important;
+  font-weight: 600 !important;
+  text-shadow: 0 1px 2px rgba(0, 0, 0, 0.2) !important;
+}
+
+.chat-button:hover,
+.create-button:hover,
+.action-button:hover {
+  background-color: #4b5563 !important;
+  border-color: #4b5563 !important;
+  color: white !important;
+  transform: translateY(-1px) !important;
+  box-shadow: 0 4px 12px rgba(30, 64, 175, 0.3) !important;
+}
+
+/* Override any inline styles that might be applied */
+[style*="background-color: #007bff"],
+[style*="background-color: #0056b3"] {
+  background-color: var(--primary-color) !important;
+  border-color: var(--primary-color) !important;
+  color: white !important;
+} 
+
+/* Cards / Surfaces */
+.card,
+.paper,
+.panel,
+.surface {
+  background-color: var(--surface-color) !important;
+  color: var(--text-color) !important;
+  border-color: var(--border-color) !important;
+}
+
+/* Links */
+a { color: #93c5fd; }
+a:hover { color: #bfdbfe; }
+
+/* =======================
+   Material UI - Dark Overrides
+   ======================= */
+
+.MuiTypography-root,
+.MuiListItemText-primary,
+.MuiListItemText-secondary,
+.MuiTableCell-root {
+  color: var(--text-color) !important;
+}
+
+/* Containers */
+.MuiPaper-root {
+  background-color: var(--surface-color) !important;
+  color: var(--text-color) !important;
+  border: 1px solid var(--border-color);
+}
+
+.MuiDialog-paper {
+  background-color: var(--surface-color) !important;
+  color: var(--text-color) !important;
+  border: 1px solid var(--border-color) !important;
+  box-shadow: 0 20px 60px rgba(0, 0, 0, 0.6) !important;
+}
+
+.MuiBackdrop-root {
+  background-color: rgba(0, 0, 0, 0.6) !important;
+}
+
+/* Inputs */
+.MuiFormLabel-root { color: var(--dark-color) !important; }
+.MuiFormLabel-root.Mui-focused {
+  color: var(--primary-color) !important;
+}
+
+.MuiOutlinedInput-root {
+  background-color: var(--panel-color) !important;
+  color: var(--text-color) !important;
+}
+.MuiOutlinedInput-root fieldset {
+  border-color: var(--border-color) !important;
+}
+.MuiOutlinedInput-root:hover fieldset {
+  border-color: var(--muted-text) !important;
+}
+.MuiOutlinedInput-root.Mui-focused fieldset {
+  border-color: var(--primary-color) !important;
+  box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.2) !important;
+}
+.MuiInputBase-input::placeholder {
+  color: var(--muted-text) !important;
+  opacity: 1 !important;
+}
+.MuiInputBase-input, .MuiSelect-select { color: var(--text-color) !important; }
+.MuiSvgIcon-root { color: var(--muted-text) !important; }
+
+/* Selects & Menus */
+.MuiSelect-icon {
+  color: var(--muted-text) !important;
+}
+.MuiMenu-paper {
+  background-color: var(--surface-color) !important;
+  color: var(--text-color) !important;
+  border: 1px solid var(--border-color) !important;
+}
+.MuiMenuItem-root { color: var(--text-color) !important; }
+
+/* Buttons - Dark Theme */
+.MuiButton-containedPrimary {
+  background-color: #374151 !important;
+  color: #fff !important;
+}
+.MuiButton-containedPrimary:hover {
+  background-color: #4b5563 !important;
+}
+.MuiButton-outlinedPrimary {
+  color: #9ca3af !important;
+  border-color: #6b7280 !important;
+}
+.MuiButton-outlinedPrimary:hover {
+  background-color: rgba(55, 65, 81, 0.12) !important;
+  border-color: #9ca3af !important;
+}
+.MuiButton-textPrimary { color: #9ca3af !important; }
+
+/* All contained buttons dark theme */
+.MuiButton-contained {
+  background-color: #374151 !important;
+  color: #fff !important;
+}
+.MuiButton-contained:hover {
+  background-color: #4b5563 !important;
+}
+
+/* All outlined buttons dark theme */
+.MuiButton-outlined {
+  color: #9ca3af !important;
+  border-color: #6b7280 !important;
+}
+.MuiButton-outlined:hover {
+  background-color: rgba(55, 65, 81, 0.12) !important;
+  border-color: #9ca3af !important;
+}
+
+/* Switches, Radios, Checkboxes */
+.MuiSwitch-track {
+  background-color: var(--border-color) !important;
+}
+.Mui-checked + .MuiSwitch-track {
+  background-color: var(--primary-color) !important;
+}
+.MuiSwitch-thumb {
+  background-color: var(--surface-color) !important;
+}
+.MuiCheckbox-root, .MuiRadio-root {
+  color: var(--muted-text) !important;
+}
+.MuiCheckbox-root.Mui-checked, .MuiRadio-root.Mui-checked {
+  color: var(--primary-color) !important;
+}
+
+/* Dialog actions spacing */
+.MuiDialogActions-root {
+  background-color: var(--surface-color) !important;
+  border-top: 1px solid var(--border-color) !important;
+}
+
+/* Chips, Badges */
+.MuiChip-root {
+  background-color: var(--panel-color) !important;
+  color: var(--text-color) !important;
+  border: 1px solid var(--border-color) !important;
+}
+.MuiBadge-badge { color: #fff !important; }
+
+/* Fix webkit autofill yellow background */
+input:-webkit-autofill,
+input:-webkit-autofill:hover,
+input:-webkit-autofill:focus,
+textarea:-webkit-autofill,
+select:-webkit-autofill {
+  -webkit-box-shadow: 0 0 0px 1000px var(--panel-color) inset;
+  -webkit-text-fill-color: var(--text-color);
+}

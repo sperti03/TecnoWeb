@@ -45,7 +45,9 @@ const NoteHome: React.FC = () => {
   const addModalRef = useRef<HTMLDivElement>(null);
 
   // Calendar integration states
-  const [calendarAutoSync, setCalendarAutoSync] = useState(NoteCalendarIntegration.isAutoSyncEnabled());
+  const [calendarAutoSync, setCalendarAutoSync] = useState(
+    NoteCalendarIntegration.isAutoSyncEnabled()
+  );
   const [calendarEventsCount, setCalendarEventsCount] = useState(0);
   const [syncLoading, setSyncLoading] = useState(false);
 
@@ -257,23 +259,31 @@ const NoteHome: React.FC = () => {
   const handleToggleAutoSync = async (enabled: boolean) => {
     setCalendarAutoSync(enabled);
     NoteCalendarIntegration.setAutoSync(enabled);
-    
+
     if (enabled) {
       // If enabling, sync all current notes
       setSyncLoading(true);
       let totalCreated = 0;
       try {
         for (const note of notes) {
-          if (note.todos && note.todos.some(todo => todo.deadline && !todo.checked)) {
-            const result = await NoteCalendarIntegration.syncNoteToCalendar(note, false);
+          if (
+            note.todos &&
+            note.todos.some((todo) => todo.deadline && !todo.checked)
+          ) {
+            const result = await NoteCalendarIntegration.syncNoteToCalendar(
+              note,
+              false
+            );
             totalCreated += result.created;
           }
         }
         await loadCalendarEventsCount();
-        alert(`✅ Auto-sync attivato! Creati ${totalCreated} eventi calendario.`);
+        alert(
+          `✅ Auto-sync attivato! Creati ${totalCreated} eventi calendario.`
+        );
       } catch (error) {
-        console.error('Errore durante sync:', error);
-        alert('❌ Errore durante la sincronizzazione');
+        console.error("Errore durante sync:", error);
+        alert("❌ Errore durante la sincronizzazione");
       } finally {
         setSyncLoading(false);
       }
@@ -284,26 +294,36 @@ const NoteHome: React.FC = () => {
     setSyncLoading(true);
     let totalCreated = 0;
     let totalErrors = 0;
-    
+
     try {
       for (const note of notes) {
-        if (note.todos && note.todos.some(todo => todo.deadline && !todo.checked)) {
-          const result = await NoteCalendarIntegration.syncNoteToCalendar(note, true);
+        if (
+          note.todos &&
+          note.todos.some((todo) => todo.deadline && !todo.checked)
+        ) {
+          const result = await NoteCalendarIntegration.syncNoteToCalendar(
+            note,
+            true
+          );
           totalCreated += result.created;
           totalErrors += result.errors;
         }
       }
-      
+
       await loadCalendarEventsCount();
-      
+
       if (totalErrors === 0) {
-        alert(`✅ Sincronizzazione completata! ${totalCreated} eventi calendario aggiornati.`);
+        alert(
+          `✅ Sincronizzazione completata! ${totalCreated} eventi calendario aggiornati.`
+        );
       } else {
-        alert(`⚠️ Sincronizzazione completata con ${totalErrors} errori. ${totalCreated} eventi creati.`);
+        alert(
+          `⚠️ Sincronizzazione completata con ${totalErrors} errori. ${totalCreated} eventi creati.`
+        );
       }
     } catch (error) {
-      console.error('Errore sync manuale:', error);
-      alert('❌ Errore durante la sincronizzazione manuale');
+      console.error("Errore sync manuale:", error);
+      alert("❌ Errore durante la sincronizzazione manuale");
     } finally {
       setSyncLoading(false);
     }
@@ -314,28 +334,38 @@ const NoteHome: React.FC = () => {
       const events = await NoteCalendarIntegration.getCalendarEventsFromNotes();
       setCalendarEventsCount(events.length);
     } catch (error) {
-      console.error('Errore caricamento eventi calendario:', error);
+      console.error("Errore caricamento eventi calendario:", error);
     }
   };
 
   const handleSyncSingleNote = async (note: Note) => {
-    if (!note.todos || !note.todos.some(todo => todo.deadline && !todo.checked)) {
-      alert('ℹ️ Questa nota non ha to-do con scadenze da sincronizzare');
+    if (
+      !note.todos ||
+      !note.todos.some((todo) => todo.deadline && !todo.checked)
+    ) {
+      alert("ℹ️ Questa nota non ha to-do con scadenze da sincronizzare");
       return;
     }
 
     try {
-      const result = await NoteCalendarIntegration.syncNoteToCalendar(note, true);
+      const result = await NoteCalendarIntegration.syncNoteToCalendar(
+        note,
+        true
+      );
       await loadCalendarEventsCount();
-      
+
       if (result.errors === 0) {
-        alert(`✅ Nota sincronizzata! ${result.created} eventi calendario creati.`);
+        alert(
+          `✅ Nota sincronizzata! ${result.created} eventi calendario creati.`
+        );
       } else {
-        alert(`⚠️ Nota sincronizzata con ${result.errors} errori. ${result.created} eventi creati.`);
+        alert(
+          `⚠️ Nota sincronizzata con ${result.errors} errori. ${result.created} eventi creati.`
+        );
       }
     } catch (error) {
-      console.error('Errore sync nota:', error);
-      alert('❌ Errore durante la sincronizzazione della nota');
+      console.error("Errore sync nota:", error);
+      alert("❌ Errore durante la sincronizzazione della nota");
     }
   };
 
@@ -391,8 +421,8 @@ const NoteHome: React.FC = () => {
         <div className="calendar-controls">
           <div className="calendar-toggle">
             <label className="toggle-switch">
-              <input 
-                type="checkbox" 
+              <input
+                type="checkbox"
                 checked={calendarAutoSync}
                 onChange={(e) => handleToggleAutoSync(e.target.checked)}
                 disabled={syncLoading}
@@ -403,23 +433,23 @@ const NoteHome: React.FC = () => {
               📅 Auto-sync to-do al calendario
             </span>
           </div>
-          
+
           <div className="calendar-info">
             <span className="events-count">
               {calendarEventsCount} eventi da note nel calendario
             </span>
           </div>
         </div>
-        
+
         <div className="calendar-actions">
-          <button 
+          <button
             className="sync-btn"
             onClick={handleManualSyncAll}
             disabled={syncLoading}
             title="Sincronizza manualmente tutte le note con to-do"
           >
-            {syncLoading ? '🔄' : '📅'} 
-            {syncLoading ? 'Sincronizzando...' : 'Sync Manuale'}
+            {syncLoading ? "🔄" : "📅"}
+            {syncLoading ? "Sincronizzando..." : "Sync Manuale"}
           </button>
         </div>
       </div>
@@ -594,8 +624,8 @@ const NoteHome: React.FC = () => {
                   {note.accessType === "public"
                     ? "Pubblica"
                     : note.accessType === "private"
-                      ? "Privata"
-                      : "Limitata"}
+                    ? "Privata"
+                    : "Limitata"}
                 </span>
                 <div className="note-footer">
                   <small>
@@ -629,7 +659,9 @@ const NoteHome: React.FC = () => {
                     {previewTodos.map((todo, idx) => (
                       <label
                         key={idx}
-                        className={`todo-pill todo-pill-preview${todo.checked ? " completed" : ""}`}
+                        className={`todo-pill todo-pill-preview${
+                          todo.checked ? " completed" : ""
+                        }`}
                         style={{
                           display: "flex",
                           alignItems: "center",
@@ -677,15 +709,18 @@ const NoteHome: React.FC = () => {
               )}
               {note.userId?.toString() === userId && (
                 <div className="note-actions note-actions-right">
-                  {note.todos && note.todos.some(todo => todo.deadline && !todo.checked) && (
-                    <button
-                      onClick={() => handleSyncSingleNote(note)}
-                      title="Sincronizza to-do di questa nota al calendario"
-                      className="sync-note-btn"
-                    >
-                      📅
-                    </button>
-                  )}
+                  {note.todos &&
+                    note.todos.some(
+                      (todo) => todo.deadline && !todo.checked
+                    ) && (
+                      <button
+                        onClick={() => handleSyncSingleNote(note)}
+                        title="Sincronizza to-do di questa nota al calendario"
+                        className="sync-note-btn"
+                      >
+                        📅
+                      </button>
+                    )}
                   <button
                     onClick={() => handleEditNote(note)}
                     title="Modifica nota"

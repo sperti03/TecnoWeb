@@ -6,6 +6,7 @@ import cors from 'cors';
 import mongoose from 'mongoose';
 import dotenv from 'dotenv';
 dotenv.config();
+import EmailService from './EmailService.js';
 
 const invitationRoutes = express.Router();
 
@@ -13,15 +14,7 @@ const invitationRoutes = express.Router();
 invitationRoutes.use(cors());
 invitationRoutes.use(express.json());
 
-// Connect to MongoDB
-const mongoUri = process.env.MONGO_URI;
-mongoose.connect(mongoUri, {})
-  .then(() => {
-    console.log('Connected to MongoDB, invitations');
-  })
-  .catch(err => {
-    console.error('Failed to connect to MongoDB', err);
-  });
+// Connessione MongoDB centralizzata in index.js
 
 // JWT verification middleware
 const verifyToken = (req, res, next) => {
@@ -31,7 +24,7 @@ const verifyToken = (req, res, next) => {
     return res.status(403).send('Token mancante');
   }
 
-  jwt.verify(token, 'tuasecretkey', (err, decoded) => {
+  jwt.verify(token, process.env.JWT_SECRET || 'tuasecretkey', (err, decoded) => {
     if (err) {
       return res.status(401).send('Token non valido');
     }
@@ -88,6 +81,15 @@ invitationRoutes.post('/send', verifyToken, async (req, res) => {
     });
 
     const savedInvitation = await invitation.save();
+    // Send email to recipient if email exists
+    if (recipient.email) {
+      await EmailService.sendInvitationEmail({
+        to: recipient.email,
+        senderUsername: req.username,
+        studySettings,
+        message,
+      });
+    }
     res.status(201).json(savedInvitation);
 
   } catch (error) {
@@ -170,6 +172,23 @@ invitationRoutes.post('/:id/accept', verifyToken, async (req, res) => {
 
     if (!invitation) {
       return res.status(404).json({ message: 'Invitation not found or already processed' });
+    }
+
+    // Notify sender via email that invitation was accepted
+    try {
+      const sender = await User.findById(invitation.senderId);
+      if (sender?.email) {
+        await EmailService.sendMail({
+          to: sender.email,
+          subject: `✅ Invito accettato da ${req.username}`,
+          html: `
+            <p>Il tuo invito a una sessione di studio è stato accettato.</p>
+            <p>Apri la sessione condivisa da Pomodoro.</p>
+          `,
+        });
+      }
+    } catch (e) {
+      console.error('Failed to send acceptance email to sender:', e);
     }
 
     res.status(200).json({ 

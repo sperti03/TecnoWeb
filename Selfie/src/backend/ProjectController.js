@@ -5,22 +5,14 @@ import Project from './ProjectModel.js';
 import jwt from 'jsonwebtoken';
 import dotenv from 'dotenv';
 dotenv.config();
+import EmailService from './EmailService.js';
 
 const projectRoutes = express.Router();
 
 projectRoutes.use(cors());
 projectRoutes.use(express.json());
 
-// Connessione a MongoDB
-const mongoUri = process.env.MONGO_URI || 'mongodb+srv://selfie:selfie@cluster0.0jvaz.mongodb.net/?retryWrites=true&w=majority&appName=Cluster0';
-mongoose.connect(mongoUri, {
-})
-  .then(() => {
-    console.log('Connected to MongoDB, projects');
-  })
-  .catch(err => {
-    console.error('Failed to connect to MongoDB', err);
-  });
+// Connessione MongoDB centralizzata in index.js
 
 // Middleware verifica token
 const verifyToken = (req, res, next) => {
@@ -116,6 +108,44 @@ projectRoutes.post('/api/addproject', verifyToken, async (req, res) => {
     console.log('Project saved successfully with ID:', newProject._id);
     
     res.status(201).json(newProject);
+    
+    // Fire-and-forget: notify actors by email if their email is known in DB
+    try {
+      const allActorIds = [];
+      for (const phase of newProject.phases) {
+        for (const task of phase.tasks || []) {
+          for (const actorId of task.actors || []) {
+            if (typeof actorId === 'string') {
+              allActorIds.push(actorId);
+            }
+          }
+        }
+      }
+      const uniqueActorIds = [...new Set(allActorIds)].filter(id => String(id) !== String(req.userId));
+      if (uniqueActorIds.length > 0) {
+        const users = await mongoose.model('User').find({ _id: { $in: uniqueActorIds } });
+        const userIdToEmail = new Map(users.map(u => [String(u._id), u.email]));
+        for (const phase of newProject.phases) {
+          for (const task of phase.tasks || []) {
+            for (const actorId of task.actors || []) {
+              const email = userIdToEmail.get(String(actorId));
+              if (email) {
+                EmailService.sendProjectTaskEmail({
+                  to: email,
+                  projectName: newProject.name,
+                  taskName: task.name,
+                  start: task.start,
+                  end: task.end,
+                  milestone: !!task.milestone,
+                }).catch(() => {});
+              }
+            }
+          }
+        }
+      }
+    } catch (notifyErr) {
+      console.error('Failed to send project task emails:', notifyErr);
+    }
   } catch (err) {
     console.error('=== ERROR CREATING PROJECT ===');
     console.error('Error name:', err.name);

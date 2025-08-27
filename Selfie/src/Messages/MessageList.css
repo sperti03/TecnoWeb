@@ -17,7 +17,7 @@
   height: 100%; 
   font-size: large ;
   background-color: white;
-  border: 1px solid #ccc;
+  border: 1px solid var(--border-color);
   border-radius: 8px;
   box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
 }
@@ -28,10 +28,10 @@
   bottom: 20px; /* Fissa il bottone al bordo inferiore della finestra */
   right: 0; /* Fissa il bottone al bordo destro della finestra */
   background: white;
-  border: 3px solid #007bff;
+  border: 3px solid var(--primary-color);
   font-size: 20px;
   cursor: pointer;
-  color: #007bff;
+  color: var(--primary-color);
   border-radius: 5px;
   padding: 10px;
   transition: right 0.5s ease; /* Transizione per lo spostamento insieme alla chat */
@@ -54,13 +54,13 @@
   padding: 10px;
   text-align: center;
   background-color: #f1f1f1;
-  border: 1px solid #ccc;
+  border: 1px solid var(--border-color);
   margin: 0;
   font-weight: bold;
 }
 
 .tab-headers h3.active {
-  background-color: #007bff;
+  background-color: var(--primary-color);
   color: white;
   font-weight: bold;
   border-bottom: 1px solid transparent;
@@ -86,7 +86,7 @@
 .message-received li {
   
   list-style-type: none;
-  border: 1px solid #ccc;
+  border: 1px solid var(--border-color);
   padding: 10px;
   width: 100%;
   background-color: #fff;
@@ -98,7 +98,7 @@
 textarea {
   width: 100%;
   padding: 10px;
-  border: 1px solid #dcdcdc;
+  border: 1px solid var(--border-color);
   border-radius: 5px;
   margin-bottom: 10px;
   transition: border-color 0.3s;
@@ -106,12 +106,12 @@ textarea {
 
 .message-list input[type="text"]:focus,
 textarea:focus {
-  border-color: #007bff;
+  border-color: var(--primary-color);
   outline: none;
 }
 
 .message-list button[type="submit"] {
-  background-color: #007bff;
+  background-color: var(--primary-color);
   color: white;
   border: none;
   padding: 10px 15px;
@@ -121,5 +121,5 @@ textarea:focus {
 }
 
 .message-list button[type="submit"]:hover {
-  background-color: #0056b3;
+  background-color: var(--primary-hover);
 }

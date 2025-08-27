@@ -7,8 +7,8 @@
     height: 70%;
     transition: left 0.5s ease; /* Transizione per far entrare il contenitore */
     z-index: 1000;
-    background-color: #ffffff;
-    border: 1px solid #ccc;
+    background-color: var(--surface-color);
+    border: 1px solid var(--border-color);
     border-radius: 8px;
     box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
     padding: 15px;
@@ -22,7 +22,7 @@
   
   .time-machine-container p {
     font-size: 18px;
-    color: #333;
+    color: var(--text-color);
     margin-bottom: 20px;
     font-weight: bold;
   }
@@ -31,19 +31,27 @@
     position: fixed;
     bottom: 20px; /* Fissa il bottone al bordo inferiore della finestra */
     left: 0; /* Fissa il bottone al bordo sinistro della finestra */
-    background: #007bff;
+    background: linear-gradient(135deg, #374151 0%, #4b5563 100%);
     color: white;
     border: none;
     font-size: 20px;
     cursor: pointer;
-    padding: 10px 15px;
-    border-radius: 0 5px 5px 0;
-    transition: left 0.5s ease; /* Transizione per l’entrata del bottone */
+    padding: 12px 18px;
+    border-radius: 0 8px 8px 0;
+    transition: all 0.3s ease;
+    box-shadow: 0 4px 8px rgba(255, 255, 255, 0.15);
+    backdrop-filter: blur(10px);
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    z-index: 1001; /* Higher than the container to ensure proper layering */
   }
   
-  .time-machine-container.open .time-machine-button {
-    left: calc(30%); /* Sposta il bottone quando la Time Machine è aperta */
+  .time-machine-button:hover {
+    background: linear-gradient(135deg, #4b5563 0%, #6b7280 100%);
+    transform: translateX(5px) translateY(-2px);
+    box-shadow: 0 6px 12px rgba(255, 255, 255, 0.25);
   }
+
+  /* Removed the repositioning of the button when panel is open */
   
   /* Input e pulsanti per impostare/avanzare il tempo */
   .time-machine-container input[type="datetime-local"],
@@ -51,19 +59,19 @@
     width: 100%;
     padding: 10px;
     margin-bottom: 15px;
-    border: 1px solid #dcdcdc;
+    border: 1px solid var(--border-color);
     border-radius: 5px;
     transition: border-color 0.3s;
   }
   
   .time-machine-container input[type="datetime-local"]:focus,
   .time-machine-container input[type="number"]:focus {
-    border-color: #007bff;
+    border-color: var(--primary-color);
     outline: none;
   }
   
   .time-machine-container button {
-    background-color: #007bff;
+    background-color: #374151;
     color: white;
     border: none;
     padding: 10px 15px;
@@ -71,22 +79,24 @@
     cursor: pointer;
     transition: background-color 0.3s;
     margin-bottom: 10px;
+    box-shadow: 0 2px 4px rgba(255, 255, 255, 0.15);
   }
   
   .time-machine-container button:hover {
-    background-color: #0056b3;
+    background-color: #4b5563;
+    box-shadow: 0 4px 8px rgba(255, 255, 255, 0.25);
   }
   
   .time-machine-container label {
     font-size: 14px;
-    color: #555;
+    color: var(--muted-text);
     margin-bottom: 5px;
     display: block;
   }
   
   /* Effetto e stile generale */
   .time-machine-container h3 {
-    color: #007bff;
+    color: var(--primary-color);
     font-size: 20px;
     margin-bottom: 15px;
   }

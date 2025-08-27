@@ -2,11 +2,11 @@
 @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Poppins:wght@400;500;600;700&display=swap');
 
 :root {
-  --main-bg-gradient: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  --main-bg-gradient: linear-gradient(135deg, #374151 0%, #4b5563 100%);
   --card-bg: rgba(255, 255, 255, 0.95);
   --card-shadow: 0 20px 60px rgba(0, 0, 0, 0.12);
-  --primary: #667eea;
-  --secondary: #764ba2;
+  --primary: #374151;
+  --secondary: #4b5563;
   --accent: #f093fb;
   --success: #4ecdc4;
   --warning: #ffe66d;
@@ -581,7 +581,7 @@ button:active {
 }
 
 .session-badge {
-  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  background: linear-gradient(135deg, #374151 0%, #4b5563 100%);
   color: white;
   padding: 0.5rem 1rem;
   border-radius: 20px;

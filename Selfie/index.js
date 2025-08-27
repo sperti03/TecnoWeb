@@ -1,18 +1,16 @@
+import 'dotenv/config';
 import express from 'express';
 import { MongoClient } from 'mongodb';
 import cors from 'cors';
-import userRoutes from './src/backend/LogSign.js'
-import noteRoutes from './src/backend/NoteController.js';
-import CalendarRoutes from './src/backend/CalendarController.js';
-import messageRoutes from './src/backend/MessageController.js'
-import timeMachineRoutes from './src/backend/TimeMachineController.js'
-import studyCycleRoutes from './src/backend/StudyCycleController.js'
-import invitationRoutes from './src/backend/InvitationController.js'
-import sessionRoutes from './src/backend/SessionController.js'
-import projectRoutes from './src/backend/ProjectController.js'
-
-import dotenv from 'dotenv';
-dotenv.config();
+import userRoutes from '../src/backend/LogSign.js'
+import noteRoutes from '../src/backend/NoteController.js';
+import CalendarRoutes from '../src/backend/CalendarController.js';
+import messageRoutes from '../src/backend/MessageController.js'
+import timeMachineRoutes from '../src/backend/TimeMachineController.js'
+import studyCycleRoutes from '../src/backend/StudyCycleController.js'
+import invitationRoutes from '../src/backend/InvitationController.js'
+import sessionRoutes from '../src/backend/SessionController.js'
+import projectRoutes from '../src/backend/ProjectController.js'
 const app = express();
 const port = 8000; // Porta per il server Express
 

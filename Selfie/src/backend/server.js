@@ -12,6 +12,8 @@ import CalendarRoutes from './CalendarController.js';
 import router from './SessionController.js';
 import timeRoute from './TimeMachineController.js';
 import userRoutes from './LogSign.js';
+import dotenv from 'dotenv';
+dotenv.config();
 
 const app = express();
 const PORT = process.env.PORT || 3000;
@@ -22,7 +24,7 @@ app.use(bodyParser.json());
 app.use(bodyParser.urlencoded({ extended: true }));
 
 // MongoDB connection
-mongoose.connect('mongodb://localhost:27017/studyapp', {
+mongoose.connect(process.env.MONGO_URI, {
   useNewUrlParser: true,
   useUnifiedTopology: true,
 });
